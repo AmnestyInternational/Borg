@@ -7,7 +7,7 @@ Amnesty International only uses data towards the universal recognition of human 
 
 Purpose
 -------
-The purpose of this project is to pull publically available data from social media sites relevant to Amnesty International. This data will be used to;
+The purpose of this project is to pull publicly available data from social media sites relevant to Amnesty International. This data will be used to;
 * Track the success of campaigns
 * Determine which issues are important to our supporters
 * Responds quickly to changes in the social media sphere
