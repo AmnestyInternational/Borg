@@ -1,0 +1,19 @@
+test_settings: &test_settings
+  adapter: sqlserver
+  mode: dblib
+  host: test-sql
+  port: 1433
+  database: databasename
+  username: databaseuser
+  password: "a really really long password"
+  timeout: 10000
+prod_settings: &prod_settings
+  adapter: sqlserver
+  mode: dblib
+  host: prod-sql
+  port: 1433
+  database: databasename
+  username: databaseuser
+  password: "a really really long password"
+  timeout: 10000
+
