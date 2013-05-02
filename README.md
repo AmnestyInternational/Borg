@@ -133,4 +133,3 @@ It is necessary to include the variable paths in the cron table.
     */10      *      *      *       *       cd /path/to/Social-Pull; ruby fb_page_post_stats.rb;
     */10      *      *      *       *       cd /path/to/Social-Pull; ruby fb_link_count.rb;
     27      *      *      *       *       cd /path/to/Social-Pull; ruby twitter.rb;
-
