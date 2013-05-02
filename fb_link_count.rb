@@ -59,19 +59,3 @@ log_time("Finish")
 
 # FQL Query
 # SELECT share_count, like_count, comment_count, url FROM link_stat WHERE url = "amnesty.ca" OR url = "amnesty.org" OR url = "amnesty.org.au" OR url = "amnesty.org.uk"
-# http://graph.facebook.com/fql?q=SELECT%20share_count,%20like_count,%20comment_count,%20url%20FROM%20link_stat%20WHERE%20url%20=%20'amnesty.ca'%20OR%20url%20=%20'amnesty.org'%20OR%20url%20=%20'amnesty.org.au'%20OR%20url%20=%20'amnesty.org.uk'%20OR%20url%20=%20'aito.ca'%20OR%20url%20=%20'amnesty.ca*'
-
-# http://graph.facebook.com/fql?q=SELECT%20share_count,%20like_count,%20comment_count,%20url%20FROM%20link_stat%20WHERE%20url='amnesty.ca'%20url='amnesty.ca*'%20OR%20%20url='amnesty.org'%20url='amnesty.org*'%20OR%20%20url='amnesty.org.au'%20url='amnesty.org.au*'%20OR%20%20url='amnesty.org.uk'%20url='amnesty.org.uk*'%20OR%20%20url='atio.ca'%20url='atio.ca*'%20OR%20%20url='hrw.org'%20url='hrw.org*'
-
-=begin
-CRON JOB
-========
-sudo su - greg -c 'crontab -e'
-
-GEM_HOME=/usr/local/lib/ruby/gems/1.9.1
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games
-
-# Social media api scripts
-*/10      *      *      *       *       cd /home/greg/Projects/dbpull; ruby fb_link_count.rb >> log.txt;
-
-=end
