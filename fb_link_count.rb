@@ -30,7 +30,7 @@ fbcounts = JSON.parse(response.body)['data']
 dbyml = YAML::load(File.open('yaml/db_settings.yml'))['prod_settings']
 client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
 
-log_time("inserting #{fbcounts.length} new link details...")
+log_time("inserting details of #{fbcounts.length} links...")
 
 fbcounts.each do |stat|
   result = client.execute("
