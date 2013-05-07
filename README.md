@@ -104,13 +104,24 @@ Create a user to run the Social-Pull scripts.
     created DATETIME NULL,
     imported DATETIME DEFAULT CURRENT_TIMESTAMP
     )
-    
+
+  
     USE externaldata
-    CREATE TABLE tweetsanatomize
+    CREATE TABLE tweetsAnatomize
     (
     tweet_id BIGINT NOT NULL,
     term VARCHAR(32) NOT NULL,
     CONSTRAINT pk_PersonID PRIMARY KEY (tweet_id,term)
+    )
+
+
+    USE externaldata
+    CREATE TABLE TweetsRefreshUrl
+    (
+    city VARCHAR(16) NOT NULL,
+    searchterm VARCHAR(32) NOT NULL,
+    max_id BIGINT NULL,
+    CONSTRAINT pk_TweetsRefreshUrl PRIMARY KEY (city, searchterm)
     )
 
 ### Git clone and set permissions

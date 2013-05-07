@@ -47,25 +47,25 @@ def insert_tweets
           INSERT tweets (id, usr, usr_id, usr_name, city, location, geo, profile_image_url, text, created)
           VALUES (
             '#{tweet[:id]}',
-            '#{tweet[:usr].to_esc_sql}',
+            '#{tweet[:usr].to_s.to_esc_sql}',
             '#{tweet[:usr_id]}',
-            '#{tweet[:usr_name].to_esc_sql}',
+            '#{tweet[:usr_name].to_s.to_esc_sql}',
             '#{tweet[:city]}',
-            '#{tweet[:location].to_esc_sql}',
+            '#{tweet[:location].to_s.to_esc_sql}',
             CASE WHEN '#{tweet[:coordinates][0]}' = '' THEN
               NULL
             ELSE
               geography::STPointFromText('POINT(' + CAST('#{tweet[:coordinates][1]}' AS VARCHAR(20)) + ' ' + CAST('#{tweet[:coordinates][0]}' AS VARCHAR(20)) + ')', 4326)
             END,
             '#{tweet[:profile_image_url]}',
-            '#{tweet[:text].to_esc_sql}',
+            '#{tweet[:text].to_s.to_esc_sql}',
             CONVERT(DATETIME, LEFT('#{tweet[:created]}', 19))
             );\n"
       
       terms = tweet[:text].anatomize
       
       terms.each do |term|
-        term = term[0,32].clean_term
+        term = term[0,32].to_esc_sql
         sql << "
           IF EXISTS (SELECT tweet_id FROM tweetsanatomize WHERE tweet_id = '#{tweet[:id]}' AND term = '#{term}')
             SELECT 'Do nothing' ;
@@ -74,34 +74,22 @@ def insert_tweets
             VALUES (
               '#{tweet[:id]}',
               '#{term}');\n"
-      end    
+      end
     @client.execute(sql).do
   end
 
   @tweet = []
 end
 
-def get_min_since_id
-  # There are issues deducing the since_id for urls because of URL shortening so this will give us a minimum since_id
-  result = @client.execute("
-    SELECT TOP 1 id
-    FROM tweets
-    WHERE imported < DATEADD(MINUTE, -90, GETDATE())
-    ORDER BY id DESC")
-
-  row = result.each(:first => true)
-  @since_id = row.empty? ? 0 : row[0]['id']
-end
-
 def fetch_tweets(city, serach_term)
   result = @client.execute("
-    SELECT TOP 1 id
-    FROM tweets
-    WHERE city = '#{city[0]}' AND text LIKE '%#{serach_term}%'
-    ORDER BY id DESC")
+    SELECT max_id
+    FROM TweetsRefreshUrl
+    WHERE city = '#{city[0]}' AND searchterm = '#{serach_term}'
+    ORDER BY max_id DESC")
 
   row = result.each(:first => true) # can make this prettier
-  since_id = row.empty? ? @since_id : row[0]['id']
+  since_id = row.empty? ? 0 : row[0]['max_id']
 
   log_time("since_id = #{since_id}")
   
@@ -110,14 +98,25 @@ def fetch_tweets(city, serach_term)
   uri = URI("http://search.twitter.com/search.json?geocode=#{city[1]['lat']},#{city[1]['long']},#{city[1]['range']}&result_type=#{@result_type}&q=#{serach_term.clean_term}&rpp=#{@returns_per_page}&since_id=#{since_id}")
   response = Net::HTTP.get(uri)
   tweets = JSON.parse(response)
+
+  since_id = tweets["max_id"]
+
+  @client.execute("
+  IF EXISTS (SELECT max_id FROM TweetsRefreshUrl WHERE city = '#{city[0]}' AND searchterm = '#{serach_term}')
+    UPDATE TweetsRefreshUrl
+    SET max_id = '#{since_id}'
+    WHERE city = '#{city[0]}' AND searchterm = '#{serach_term}';
+  ELSE
+    INSERT TweetsRefreshUrl (city, searchterm, max_id)
+    VALUES ('#{city[0]}', '#{serach_term}', '#{since_id}');\n").do
+
+  return tweets
 end
 
 dbyml = YAML::load(File.open('yaml/db_settings.yml'))['prod_settings']
 @client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
 
 @tweet = []
-
-get_min_since_id
 
 yml['SearchTerms'].each do |serach_term|
 
