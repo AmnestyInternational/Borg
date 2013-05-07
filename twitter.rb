@@ -24,8 +24,10 @@ def sql_escape(input)
   Iconv.iconv('ascii//ignore//translit', 'utf-8', input)[0].to_s.gsub("'","''")
 end
 
-def clean_term(term)
-  term.to_s.gsub(/[@# ]/, '@' => '%40', '#' => '%23', ' ' => '+')
+class String
+  def clean_term
+    self.to_s.gsub(/[@# ]/, '@' => '%40', '#' => '%23', ' ' => '+')
+  end
 end
 
 def insert_tweets
@@ -84,9 +86,9 @@ def fetch_tweets(city, serach_term)
 
   log_time("since_id = #{since_id}")
   
-  log_time("http://search.twitter.com/search.json?geocode=#{city[1]['lat']},#{city[1]['long']},#{city[1]['range']}&result_type=#{@result_type}&q=#{clean_term(serach_term)}&rpp=#{@returns_per_page}&since_id=#{since_id}")
+  log_time("http://search.twitter.com/search.json?geocode=#{city[1]['lat']},#{city[1]['long']},#{city[1]['range']}&result_type=#{@result_type}&q=#{serach_term.clean_term}&rpp=#{@returns_per_page}&since_id=#{since_id}")
   
-  uri = URI("http://search.twitter.com/search.json?geocode=#{city[1]['lat']},#{city[1]['long']},#{city[1]['range']}&result_type=#{@result_type}&q=#{clean_term(serach_term)}&rpp=#{@returns_per_page}&since_id=#{since_id}")
+  uri = URI("http://search.twitter.com/search.json?geocode=#{city[1]['lat']},#{city[1]['long']},#{city[1]['range']}&result_type=#{@result_type}&q=#{serach_term.clean_term}&rpp=#{@returns_per_page}&since_id=#{since_id}")
   response = Net::HTTP.get(uri)
   tweets = JSON.parse(response)
 end
@@ -100,7 +102,7 @@ yml = YAML::load(File.open('yaml/twitter.yml'))
 
 get_min_since_id
 
-yml['Terms'].each do |serach_term|
+yml['SearchTerms'].each do |serach_term|
 
   yml['Cities'].each do |city|
 

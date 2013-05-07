@@ -58,7 +58,9 @@ Cities:
     lat: 43.9
     long: -78.85
     range: 5km
-Terms:
+
+SearchTerms:
+# Note: 'amnesty.org' will also return results for 'amnesty.org.au' and 'amnesty.org.uk'
   - 'Amnesty International'
   - 'AmnestyInternational'
   - 'amnesty.ca'
@@ -74,4 +76,37 @@ Terms:
   - '@AmnestySecurity'
   - '@AmnestyNow'
 
-# Note: amnesty.org will also return results for amnesty.org.au and amnesty.org.uk
+IgnoredWords:
+# Note: Ignored words should be in lower case
+  - ''
+  - '&amp'
+  - 'and'
+  - 'rt'
+  - 'of'
+  - 'to'
+  - 'the'
+  - 'in'
+  - 'on'
+  - 'a'
+  - 'is'
+  - 'at'
+  - 'be'
+  - 'you'
+  - 'it'
+  - 'our'
+  - 'this'
+  - 'that'
+  - 'from'
+  - 'about'
+  - 'by'
+  - 'must'
+  - 'as'
+  - 'has'
+  - 'us'
+  - 'what'
+  - 'have'
+  - 'not'
+  - 'for'
+  - 'are'
+  - 'its'
+  - 'an'
