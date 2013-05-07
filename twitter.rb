@@ -7,10 +7,6 @@ require 'time'
 require 'iconv'
 require 'logger'
 
-# variables
-@result_type = 'recent'
-@returns_per_page = '100'
-
 $LOG = Logger.new('log/twitter.log')   
 
 def log_time(input)
@@ -20,8 +16,6 @@ end
 
 log_time("Start time")
 
-
-
 class String
   def clean_term
     self.to_s.gsub(/[@# ]/, '@' => '%40', '#' => '%23', ' ' => '+')
@@ -30,15 +24,23 @@ class String
   def to_esc_sql
     Iconv.iconv('ascii//ignore//translit', 'utf-8', self)[0].to_s.gsub("'","''")
   end
+
+  def anatomize
+    self.split(/\"|[^a-z0-9]\'|\(|\)|\s+|[^a-z0-9]\s+|[^a-z0-9]\z+|\.\.+|$|^/imx).reject{ |s| $ignoredwords.include? s.downcase }.uniq
+  end
 end
+
+yml = YAML::load(File.open('yaml/twitter.yml'))
+@result_type = yml['Settings']['result_type']
+@returns_per_page = yml['Settings']['returns_per_page']
+$ignoredwords = yml['IgnoredWords']
 
 def insert_tweets
 
   log_time ("inserting #{@tweet.length} tweet(s)...")
 
   @tweet.each do |tweet|
-
-    @client.execute("
+    sql = "
         IF EXISTS (SELECT id FROM tweets WHERE id = '#{tweet[:id]}')
           SELECT 'Do nothing' ;
         ELSE
@@ -58,7 +60,22 @@ def insert_tweets
             '#{tweet[:profile_image_url]}',
             '#{tweet[:text].to_esc_sql}',
             CONVERT(DATETIME, LEFT('#{tweet[:created]}', 19))
-            );").do
+            );\n"
+      
+      terms = tweet[:text].anatomize
+      
+      terms.each do |term|
+        term = term[0,32].clean_term
+        sql << "
+          IF EXISTS (SELECT tweet_id FROM tweetsanatomize WHERE tweet_id = '#{tweet[:id]}' AND term = '#{term}')
+            SELECT 'Do nothing' ;
+          ELSE
+            INSERT tweetsanatomize (tweet_id, term)
+            VALUES (
+              '#{tweet[:id]}',
+              '#{term}');\n"
+      end    
+    @client.execute(sql).do
   end
 
   @tweet = []
@@ -99,8 +116,6 @@ dbyml = YAML::load(File.open('yaml/db_settings.yml'))['prod_settings']
 @client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
 
 @tweet = []
-
-yml = YAML::load(File.open('yaml/twitter.yml'))
 
 get_min_since_id
 

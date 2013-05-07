@@ -1,3 +1,12 @@
+Settings:
+  result_type: recent
+  returns_per_page: 100
+# result_type example values;
+# * mixed: include both popular and real time results in the response.
+# * recent: return only the most recent results in the response
+# * popular: return only the most popular results in the response.
+# returns_per_page max of 100
+
 Cities:
 # These are the largest 14 cities in Canada
   GTA:
