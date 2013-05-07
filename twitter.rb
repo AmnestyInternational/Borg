@@ -20,13 +20,15 @@ end
 
 log_time("Start time")
 
-def sql_escape(input)
-  Iconv.iconv('ascii//ignore//translit', 'utf-8', input)[0].to_s.gsub("'","''")
-end
+
 
 class String
   def clean_term
     self.to_s.gsub(/[@# ]/, '@' => '%40', '#' => '%23', ' ' => '+')
+  end
+
+  def to_esc_sql
+    Iconv.iconv('ascii//ignore//translit', 'utf-8', self)[0].to_s.gsub("'","''")
   end
 end
 
@@ -43,18 +45,18 @@ def insert_tweets
           INSERT tweets (id, usr, usr_id, usr_name, city, location, geo, profile_image_url, text, created)
           VALUES (
             '#{tweet[:id]}',
-            '#{sql_escape(tweet[:usr])}',
+            '#{tweet[:usr].to_esc_sql}',
             '#{tweet[:usr_id]}',
-            '#{sql_escape(tweet[:usr_name])}',
+            '#{tweet[:usr_name].to_esc_sql}',
             '#{tweet[:city]}',
-            '#{sql_escape(tweet[:location])}',
+            '#{tweet[:location].to_esc_sql}',
             CASE WHEN '#{tweet[:coordinates][0]}' = '' THEN
               NULL
             ELSE
               geography::STPointFromText('POINT(' + CAST('#{tweet[:coordinates][1]}' AS VARCHAR(20)) + ' ' + CAST('#{tweet[:coordinates][0]}' AS VARCHAR(20)) + ')', 4326)
             END,
             '#{tweet[:profile_image_url]}',
-            '#{sql_escape(tweet[:text])}',
+            '#{tweet[:text].to_esc_sql}',
             CONVERT(DATETIME, LEFT('#{tweet[:created]}', 19))
             );").do
   end
