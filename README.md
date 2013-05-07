@@ -105,17 +105,13 @@ Create a user to run the Social-Pull scripts.
     imported DATETIME DEFAULT CURRENT_TIMESTAMP
     )
 
-  
-    USE externaldata
     CREATE TABLE tweetsAnatomize
     (
     tweet_id BIGINT NOT NULL,
     term VARCHAR(32) NOT NULL,
-    CONSTRAINT pk_PersonID PRIMARY KEY (tweet_id,term)
+    CONSTRAINT pk_TweetsAnatomize PRIMARY KEY (tweet_id,term)
     )
 
-
-    USE externaldata
     CREATE TABLE TweetsRefreshUrl
     (
     city VARCHAR(16) NOT NULL,
