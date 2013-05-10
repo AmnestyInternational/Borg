@@ -13,7 +13,7 @@ http.read_timeout = 10 * 60
 response = http.request(Net::HTTP::Get.new("/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml"))
 endata = XmlSimple.xml_in(response.body.force_encoding("ISO-8859-1").encode("UTF-8"), { 'KeyAttr' => 'name' })['rows'][0]['row']
 
-puts "" + endata.length + " records imported..."
+puts "" + endata.length.to_s + " records imported..."
 
 sleep 5
 
