@@ -4,7 +4,7 @@ require 'net/http'
 require 'yaml'
 
 token = YAML::load(File.open('yaml/api_tokens.yml'))['api_tokens']['engagingnetworkstoken']
-startdate = (Time.now - (2 * 24 * 60 * 60)).strftime("%m%d%Y") # two days
+startdate = (Time.now - (1 * 24 * 60 * 60)).strftime("%m%d%Y") # one days worth
 
 puts "Requesting records with : http://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml"
 
@@ -17,6 +17,8 @@ puts "" + endata.length + " records imported..."
 sleep 5
 
 endata.each do | row |
+puts row.inspect + "\n"
+=begin
   puts "account_id: " + row['account_id'][0]
   puts "supporter_id: " + row['supporter_id'][0]
   puts "supporter_email: " + row['supporter_email'][0]
@@ -56,7 +58,6 @@ endata.each do | row |
   puts "province: " + row['province'][0]
   puts "postal_code: " + row['postal_code'][0]
   puts "title: " + row['title'][0]
-  puts "iar_import: " + row['iar_import'][0]
-  puts "iar_nasrin_actiontakers_may2013: " + row['iar_nasrin_actiontakers_may2013'][0]
+=end
 end
 
