@@ -6,14 +6,17 @@ require 'yaml'
 token = YAML::load(File.open('yaml/api_tokens.yml'))['api_tokens']['engagingnetworkstoken']
 startdate = (Time.now - (2 * 24 * 60 * 60)).strftime("%m%d%Y") # one days worth
 
-puts "Requesting records with : http://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml"
+puts "#{Time.now.to_s} - Requesting records with : https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml"
 
-http = Net::HTTP.new('www.e-activist.com')
-http.read_timeout = 10 * 60
-response = http.request(Net::HTTP::Get.new("/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml"))
+uri = URI.parse("https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml")
+http = Net::HTTP.new(uri.host, uri.port)
+http.read_timeout = 20 * 60
+http.use_ssl = true
+http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+response = http.get(uri.request_uri)
 endata = XmlSimple.xml_in(response.body.force_encoding("ISO-8859-1").encode("UTF-8"), { 'KeyAttr' => 'name' })['rows'][0]['row']
 
-puts "" + endata.length.to_s + " records imported..."
+puts "#{Time.now.to_s} - " + endata.length.to_s + " records imported..."
 
 endata.each do | row |
 puts row.inspect + "\n"
@@ -60,5 +63,5 @@ puts row.inspect + "\n"
 =end
 end
 
-puts "" + endata.length.to_s + " records imported..."
+puts "#{Time.now.to_s} - " + endata.length.to_s + " records imported..."
 
