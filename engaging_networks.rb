@@ -42,13 +42,13 @@ end
 
 def pullrawdata(days)
   token = YAML::load(File.open('yaml/api_tokens.yml'))['api_tokens']['engagingnetworkstoken']
-  startdate = (Time.now - (days * 24 * 60 * 60)).strftime("%m%d%Y") # up to 45 days
+  startdate = (Time.now - (days * 24 * 60 * 60)).strftime("%m%d%Y")
 
   log_time("Requesting " + days.to_s + " day(s) of records with : https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml")
 
   uri = URI.parse("https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml")
   http = Net::HTTP.new(uri.host, uri.port)
-  http.read_timeout = 60 * 60
+  http.read_timeout = 480 * 60 # the pulling process needs a huge timeout
   http.use_ssl = true
   http.verify_mode = OpenSSL::SSL::VERIFY_NONE
   response = http.get(uri.request_uri)
