@@ -2,66 +2,85 @@
 require 'xmlsimple'
 require 'net/http'
 require 'yaml'
+require 'logger'
 
-token = YAML::load(File.open('yaml/api_tokens.yml'))['api_tokens']['engagingnetworkstoken']
-startdate = (Time.now - (2 * 24 * 60 * 60)).strftime("%m%d%Y") # one days worth
+$LOG = Logger.new('log/e-activist.log')   
 
-puts "#{Time.now.to_s} - Requesting records with : https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml"
-
-uri = URI.parse("https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml")
-http = Net::HTTP.new(uri.host, uri.port)
-http.read_timeout = 20 * 60
-http.use_ssl = true
-http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-response = http.get(uri.request_uri)
-endata = XmlSimple.xml_in(response.body.force_encoding("ISO-8859-1").encode("UTF-8"), { 'KeyAttr' => 'name' })['rows'][0]['row']
-
-puts "#{Time.now.to_s} - " + endata.length.to_s + " records imported..."
-
-endata.each do | row |
-puts row.inspect + "\n"
-=begin
-  puts "account_id: " + row['account_id'][0]
-  puts "supporter_id: " + row['supporter_id'][0]
-  puts "supporter_email: " + row['supporter_email'][0]
-  puts "supporter_create_date: " + row['supporter_create_date'][0]
-  puts "supporter_modified_date: " + row['supporter_modified_date'][0]
-  puts "type: " + row['type'][0]
-  puts "id: " + row['id'][0]
-  puts "date: " + row['date'][0]
-  puts "time: " + row['time'][0]
-  puts "status: " + row['status'][0]
-  puts "data1: " + row['data1'][0]
-  puts "data2: " + row['data2'][0]
-  puts "data3: " + row['data3'][0]
-  puts "data4: " + row['data4'][0]
-  puts "data5: " + row['data5'][0]
-  puts "data6: " + row['data6'][0]
-  puts "data7: " + row['data7'][0]
-  puts "data8: " + row['data8'][0]
-  puts "data9: " + row['data9'][0]
-  puts "data10: " + row['data10'][0]
-  puts "data11: " + row['data11'][0]
-  puts "data12: " + row['data12'][0]
-  puts "data13: " + row['data13'][0]
-  puts "data14: " + row['data14'][0]
-  puts "data15: " + row['data15'][0]
-  puts "data16: " + row['data16'][0]
-  puts "data17: " + row['data17'][0]
-  puts "data18: " + row['data18'][0]
-  puts "data19: " + row['data19'][0]
-  puts "data20: " + row['data20'][0]
-  puts "first_name: " + row['first_name'][0]
-  puts "last_name: " + row['last_name'][0]
-  puts "email: " + row['email'][0]
-  puts "phone_number: " + row['phone_number'][0]
-  puts "address: " + row['address'][0]
-  puts "city: " + row['city'][0]
-  puts "province: " + row['province'][0]
-  puts "postal_code: " + row['postal_code'][0]
-  puts "title: " + row['title'][0]
-=end
+def log_time(input)
+  puts Time.now.to_s + ", " + input
+  $LOG.info(input)
 end
 
-puts "#{Time.now.to_s} - " + endata.length.to_s + " records imported..."
+log_time("Start time")
 
+def pullrawdata(days)
+  token = YAML::load(File.open('yaml/api_tokens.yml'))['api_tokens']['engagingnetworkstoken']
+  startdate = (Time.now - (days * 24 * 60 * 60)).strftime("%m%d%Y") # up to 45 days
+
+  log_time("Requesting " + days.to_s + " day(s) of records with : https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml")
+
+  uri = URI.parse("https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml")
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.read_timeout = 60 * 60
+  http.use_ssl = true
+  http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+  response = http.get(uri.request_uri)
+  raweactivism = XmlSimple.xml_in(response.body.force_encoding("ISO-8859-1").encode("UTF-8"), { 'KeyAttr' => 'name' })['rows'][0]['row']
+
+  log_time(raweactivism.length.to_s + " records imported...")
+  raweactivism
+end
+
+def savedata(inputdata, filename)
+  open("tmp/#{filename}.yml", 'w') {|f| YAML.dump(inputdata, f)}
+  loaded = open("tmp/#{filename}.yml") {|f| YAML.load(f) }
+  log_time("tmp/#{filename}.yml created with #{inputdata.length.to_s} records")
+end
+
+def loadrawdata
+  raweactivism = YAML::load(File.open('tmp/raweactivism.yml'))
+  log_time(raweactivism.length.to_s + " records loaded from tmp/raweactivism.yml")
+  raweactivism
+end
+
+def organise(raweactivism)
+  eactivist = Hash.new {|hash,key| hash[key] = Hash.new {|hash,key| hash[key] = [] } }
+
+  structure = YAML::load(File.open('yaml/engagingnetworks.yml'))['structure']
+
+  raweactivism.each do | row |
+
+    structure['eactivistdetails'].each do | field |
+      eactivist[row["supporter_id"][0]][field] = row[field][0] unless row[field].nil? or field.nil?
+    end
+
+    # these fields need special attention for formatting. imid_id to imis_id and empty hashes being produced for phone numbers and provinces
+    eactivist[row["supporter_id"][0]]['imis_id'] = row["imid_id"][0] unless row["imid_id"].nil?
+    eactivist[row["supporter_id"][0]]['phone_number'] = row["phone_number"][0] unless row["phone_number"].nil? or row["phone_number"][0].empty?
+    eactivist[row["supporter_id"][0]]['province'] = row["province"][0] unless row["province"].nil? or row["province"][0].empty?
+    eactivist[row["supporter_id"][0]]['supporter_modified_date'] = row["supporter_modified_date"][0] unless row["supporter_modified_date"].nil? or row["supporter_modified_date"][0].empty?
+
+    attributes = Hash.new
+    structure['eactivistattributes'].each do | field |
+      attributes[field] = row[field][0] unless row[field].nil?
+    end
+    eactivist[row["supporter_id"][0]]['attributes'] = attributes unless attributes.empty?
+
+    activities = Hash.new
+    row.each do | field |
+      # rewrite this, it's messy! Possibly use any?
+      activities[field[0]] = field[1][0] unless field[1][0].empty? or (structure['eactivistdetails'] + structure['eactivistattributes'] + structure['ignorefields'] + structure['specialfields']).include? field[0]
+    end
+
+    eactivist[row["supporter_id"][0]]['activities'] << activities
+  end
+  log_time("organised #{raweactivism.length.to_s} rows into #{eactivist.length.to_s} supporter records")
+  eactivist
+end
+
+#savedata(pullrawdata(2), 'raweactivism')
+eactivist = organise(loadrawdata)
+
+savedata(eactivist, 'cleaneactivism')
+
+log_time("Finish time")
