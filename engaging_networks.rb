@@ -3,6 +3,9 @@ require 'xmlsimple'
 require 'net/http'
 require 'yaml'
 require 'logger'
+require 'tiny_tds'
+require 'iconv'
+require 'time'
 
 $LOG = Logger.new('log/e-activist.log')   
 
@@ -12,6 +15,30 @@ def log_time(input)
 end
 
 log_time("Start time")
+
+class String
+  def to_esc_sql
+    output = Iconv.iconv('ascii//ignore//translit', 'utf-8', self)[0].to_s.gsub("'","''")
+    output = Time.parse(output).strftime "%Y-%m-%d" if output.match(/\d\d\/\d\d\/\d\d\d\d/)
+    output.to_s.empty? ? "NULL" : "'" + output + "'" 
+  end
+end
+
+class Array
+  def to_esc_sql
+    output = Iconv.iconv('ascii//ignore//translit', 'utf-8', self[0])[0].to_s.gsub("'","''")
+    output = Time.parse(output).strftime "%Y-%m-%d" if output.match(/\d\d\/\d\d\/\d\d\d\d/)
+    output.to_s.empty? ? "NULL" : "'" + output + "'" 
+  end
+end
+
+class Hash
+  def to_esc_sql
+    output = Iconv.iconv('ascii//ignore//translit', 'utf-8', self[0])[0].to_s.gsub("'","''")
+    output = Time.parse(output).strftime "%Y-%m-%d" if output.match(/\d\d\/\d\d\/\d\d\d\d/)
+    output.to_s.empty? ? "NULL" : "'" + output + "'" 
+  end
+end
 
 def pullrawdata(days)
   token = YAML::load(File.open('yaml/api_tokens.yml'))['api_tokens']['engagingnetworkstoken']
@@ -78,9 +105,78 @@ def organise(raweactivism)
   eactivist
 end
 
-#savedata(pullrawdata(2), 'raweactivism')
+def importeactivists(eactivists)
+  dbyml = YAML::load(File.open('yaml/db_settings.yml'))['test_settings']
+  @client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
+
+  eactivists.each_pair do | supporter_id, data |
+    sql = "
+        IF EXISTS (SELECT supporter_id FROM ENsupporters WHERE supporter_id = #{supporter_id.to_esc_sql})
+          UPDATE ENsupporters
+          SET
+            imis_id = #{data['imis_id'].to_esc_sql},
+            first_name = #{data['first_name'].to_esc_sql},
+            last_name = #{data['last_name'].to_esc_sql},
+            preferred_salutation = #{data['preferred_salutation'].to_esc_sql},
+            title = #{data['title'].to_esc_sql},
+            supporter_email = #{data['supporter_email'].to_esc_sql},
+            address = #{data['address'].to_esc_sql},
+            city = #{data['city'].to_esc_sql},
+            postal_code = #{data['postal_code'].to_esc_sql},
+            province = #{data['province'].to_esc_sql},
+            phone_number = #{data['phone_number'].to_esc_sql},
+            supporter_create_date = #{data['supporter_create_date'].to_esc_sql},
+            supporter_modified_date = #{data['supporter_modified_date'].to_esc_sql}
+          WHERE supporter_id = #{supporter_id.to_esc_sql};
+        ELSE
+          INSERT ENsupporters (supporter_id, imis_id, first_name, last_name, preferred_salutation, title, supporter_email, address, city, postal_code, province, phone_number, supporter_create_date, supporter_modified_date)
+          VALUES (
+            #{supporter_id.to_esc_sql},
+            #{data['imis_id'].to_esc_sql},
+            #{data['first_name'].to_esc_sql},
+            #{data['last_name'].to_esc_sql},
+            #{data['preferred_salutation'].to_esc_sql},
+            #{data['title'].to_esc_sql},
+            #{data['supporter_email'].to_esc_sql},
+            #{data['address'].to_esc_sql},
+            #{data['city'].to_esc_sql},
+            #{data['postal_code'].to_esc_sql},
+            #{data['province'].to_esc_sql},
+            #{data['phone_number'].to_esc_sql},
+            #{data['supporter_create_date'].to_esc_sql},
+            #{data['supporter_modified_date'].to_esc_sql});\n"
+
+      data['attributes'].each do | attribute |
+        sql << "
+          IF EXISTS (
+            SELECT seqn
+            FROM ENsupportersAttributes
+            WHERE
+              supporter_id = #{supporter_id.to_esc_sql} AND
+              attribute = #{attribute[0].to_esc_sql})
+          UPDATE ENsupportersAttributes
+          SET
+            updated = GETDATE(),
+            value = #{attribute[1].to_esc_sql}
+          WHERE
+            supporter_id = #{supporter_id.to_esc_sql} AND
+            attribute = #{attribute[0].to_esc_sql}
+         ELSE
+          INSERT INTO ENsupportersAttributes (supporter_id, attribute, value)
+          VALUES (#{supporter_id.to_esc_sql}, #{attribute[0].to_esc_sql}, #{attribute[1].to_esc_sql});"
+      end
+
+    puts sql
+    @client.execute(sql).do
+  end
+
+end
+
+savedata(pullrawdata(1), 'raweactivism')
 eactivist = organise(loadrawdata)
 
 savedata(eactivist, 'cleaneactivism')
+
+importeactivists(eactivist)
 
 log_time("Finish time")
