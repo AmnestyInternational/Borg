@@ -1,0 +1,22 @@
+structure:
+  eactivistdetails:
+    - supporter_id
+    - first_name
+    - last_name
+    - preferred_salutation
+    - title
+    - supporter_email
+    - address
+    - city
+    - postal_code
+    - supporter_create_date
+  specialfields:
+  # these fields require special treatment
+    - province
+    - phone_number
+  eactivistattributes:
+    - 
+  ignorefields:
+    - account_id
+    - email
+
