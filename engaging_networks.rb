@@ -166,6 +166,10 @@ def importeactivists(eactivists)
           VALUES (#{supporter_id.to_esc_sql}, #{attribute[0].to_esc_sql}, #{attribute[1].to_esc_sql});"
       end
 
+    data['activities'].each do | activity |
+      
+    end
+
     puts sql
     @client.execute(sql).do
   end
