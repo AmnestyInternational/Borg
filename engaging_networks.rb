@@ -5,9 +5,12 @@ require 'yaml'
 require 'logger'
 require 'tiny_tds'
 require 'iconv'
+require 'active_support/all'
 require 'time'
 
-$LOG = Logger.new('log/e-activist.log')   
+$LOG = Logger.new('log/e-activist.log')
+# Set back to default formatter because active_support/all is messing things up
+$LOG.formatter = Logger::Formatter.new 
 
 def log_time(input)
   puts Time.now.to_s + ", " + input
@@ -99,6 +102,8 @@ def organise(raweactivism)
       activities[field[0]] = field[1][0] unless field[1][0].empty? or (structure['eactivistdetails'] + structure['eactivistattributes'] + structure['ignorefields'] + structure['specialfields']).include? field[0]
     end
 
+    activities['datetime'] = (activities['date'].to_s + ' ' + activities['time'].to_s).to_datetime.to_s(:db)
+
     eactivist[row["supporter_id"][0]]['activities'] << activities
   end
   log_time("organised #{raweactivism.length.to_s} rows into #{eactivist.length.to_s} supporter records")
@@ -107,13 +112,13 @@ end
 
 def importeactivists(eactivists)
   dbyml = YAML::load(File.open('yaml/db_settings.yml'))['test_settings']
-  @client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
+  client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
   log_time("connection to #{dbyml['database']} on #{dbyml['host']} opened, inserting / updating records")
   log_time("inserting / updating #{eactivists.length} supporters")
   log_time("inserting / updating #{eactivists.inject(0) { |result, element| result + element[1]['attributes'].length }} supporter attributes")
   log_time("holding #{eactivists.inject(0) { |result, element| result + element[1]['activities'].length }} supporter activities")
 
-  @insertcount = Hash.new {|hash,key| hash[key] = 0 }
+  insertcount = Hash.new {|hash,key| hash[key] = 0 }
   eactivists.each_pair do | supporter_id, data |
     sql = "
         IF EXISTS (SELECT supporter_id FROM ENsupporters WHERE supporter_id = #{supporter_id.to_esc_sql})
@@ -131,7 +136,8 @@ def importeactivists(eactivists)
             province = #{data['province'].to_esc_sql},
             phone_number = #{data['phone_number'].to_esc_sql},
             supporter_create_date = #{data['supporter_create_date'].to_esc_sql},
-            supporter_modified_date = #{data['supporter_modified_date'].to_esc_sql}
+            supporter_modified_date = #{data['supporter_modified_date'].to_esc_sql},
+            updated = GETDATE()
           WHERE supporter_id = #{supporter_id.to_esc_sql};
         ELSE
           INSERT ENsupporters (supporter_id, imis_id, first_name, last_name, preferred_salutation, title, supporter_email, address, city, postal_code, province, phone_number, supporter_create_date, supporter_modified_date)
@@ -151,7 +157,7 @@ def importeactivists(eactivists)
             #{data['supporter_create_date'].to_esc_sql},
             #{data['supporter_modified_date'].to_esc_sql});\n"
       
-      @insertcount['supporter'] += 1
+      insertcount['supporter'] += 1
       
       data['attributes'].each do | attribute |
         sql << "
@@ -172,7 +178,7 @@ def importeactivists(eactivists)
           INSERT INTO ENsupportersAttributes (supporter_id, attribute, value)
           VALUES (#{supporter_id.to_esc_sql}, #{attribute[0].to_esc_sql}, #{attribute[1].to_esc_sql});"
 
-        @insertcount['attribute'] += 1
+        insertcount['attribute'] += 1
 
       end
 
@@ -181,11 +187,11 @@ def importeactivists(eactivists)
     end
 
     puts sql
-    @client.execute(sql).do
+    client.execute(sql).do
   end
 
-  log_time("#{@insertcount['supporter']} supporters inserted / updated")
-  log_time("#{@insertcount['attribute']} supporters inserted / updated")
+  log_time("#{insertcount['supporter']} supporters inserted / updated")
+  log_time("#{insertcount['attribute']} supporters inserted / updated")
 
 end
 
