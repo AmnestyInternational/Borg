@@ -189,7 +189,7 @@ Create a user to run the Social-Pull scripts.
     USE <dbname>;
     CREATE TABLE Articles
     (
-    url VARCHAR(128) PRIMARY KEY NOT NULL,
+    url VARCHAR(256) PRIMARY KEY NOT NULL,
     title VARCHAR(128) NULL,
     source VARCHAR(32) NULL,
     type VARCHAR(8) NOT NULL,
