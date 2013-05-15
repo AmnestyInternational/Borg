@@ -1,6 +1,5 @@
 structure:
   eactivistdetails:
-    - supporter_id
     - first_name
     - last_name
     - preferred_salutation
@@ -14,9 +13,35 @@ structure:
   # these fields require special treatment
     - province
     - phone_number
-  eactivistattributes:
-    - 
+    - imid_id
+    - supporter_modified_date
+  eactivistactivityfields:
+    - type
+    - id
+    - date
+    - time
+    - status
+    - data1
+    - data2
+    - data3
+    - data4
+    - data5
+    - data6
+    - data7
+    - data8
+    - data9
+    - data10
+    - data11
+    - data12
+    - data13
+    - data14
+    - data15
+    - data16
+    - data17
+    - data18
+    - data19
+    - data20
   ignorefields:
     - account_id
     - email
-
+    - supporter_id
