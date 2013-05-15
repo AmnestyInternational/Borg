@@ -34,7 +34,7 @@ end
 def pullgooglenews
   log_time("polling Google News")
   http = Net::HTTP.new('news.google.ca')
-  response = http.request(Net::HTTP::Get.new("/news/feeds?q=%22amnesty+international%22&hgl=ca&pz=1&cf=all&ned=ca&hl=en&output=rss"))
+  response = http.request(Net::HTTP::Get.new("/news/feeds?q=%22amnesty+international%22+canada&hgl=ca&pz=1&cf=all&ned=ca&hl=en&output=rss"))
   newsarticles = Array.new
   newsarticles = XmlSimple.xml_in(response.body.force_encoding("ISO-8859-1").encode("UTF-8"), { 'KeyAttr' => 'name' })['channel'][0]['item']
   
