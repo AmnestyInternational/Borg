@@ -35,6 +35,7 @@ def pullgooglenews
   log_time("polling Google News")
   http = Net::HTTP.new('news.google.ca')
   response = http.request(Net::HTTP::Get.new("/news/feeds?q=%22amnesty+international%22&hgl=ca&pz=1&cf=all&ned=ca&hl=en&topic=n&output=rss"))
+  newsarticles = Array.new
   newsarticles = XmlSimple.xml_in(response.body.force_encoding("ISO-8859-1").encode("UTF-8"), { 'KeyAttr' => 'name' })['channel'][0]['item']
   
   log_time("#{newsarticles.length.to_s} articles retrieved from Google News")
@@ -55,6 +56,7 @@ def pullicerocket
   log_time("polling Ice Rocket")
   http = Net::HTTP.new('www.icerocket.com')
   response = http.request(Net::HTTP::Get.new("/search?tab=blog&q=%22amnesty+international%22+canada&rss=1&dr=1"))
+  blogs = Array.new
   blogs = XmlSimple.xml_in(response.body, { 'KeyAttr' => 'name' })['channel'][0]['item']
 
   log_time("#{blogs.length.to_s} articles retrieved from Ice Rocket")
@@ -75,6 +77,7 @@ def pullgoogleblog
   log_time("polling Google Blogs")
   http = Net::HTTP.new('www.google.ca')
   response = http.request(Net::HTTP::Get.new("/search?hl=en-CA&q=%22amnesty+international%22&tbm=blg&output=rss&hl=en-CA&cr=countryCA&biw=1440&bih=766&tbs=ctr:countryCA,qdr:d&source=hp"))
+  blogs = Array.new
   blogs = XmlSimple.xml_in(response.body.force_encoding("ISO-8859-1").encode("UTF-8"), { 'KeyAttr' => 'name' })['channel'][0]['item']
 
   log_time("#{blogs.length.to_s} articles retrieved from Google Blogs")
