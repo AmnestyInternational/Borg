@@ -211,6 +211,7 @@ Create a user to run the Social-Pull scripts.
 
     $ cd /path/to/dir
     $ git clone https://github.com/AmnestyInternational/Social-Pull.git
+    $ bundle install
     $ sudo chown -R <username>:<groupname> Social-Pull/
 
 ### YAML settings
