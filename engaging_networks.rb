@@ -108,7 +108,12 @@ end
 def importeactivists(eactivists)
   dbyml = YAML::load(File.open('yaml/db_settings.yml'))['test_settings']
   @client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
+  log_time("connection to #{dbyml['database']} on #{dbyml['host']} opened, inserting / updating records")
+  log_time("inserting / updating #{eactivists.length} supporters")
+  log_time("inserting / updating #{eactivists.inject(0) { |result, element| result + element[1]['attributes'].length }} supporter attributes")
+  log_time("holding #{eactivists.inject(0) { |result, element| result + element[1]['activities'].length }} supporter activities")
 
+  @insertcount = Hash.new {|hash,key| hash[key] = 0 }
   eactivists.each_pair do | supporter_id, data |
     sql = "
         IF EXISTS (SELECT supporter_id FROM ENsupporters WHERE supporter_id = #{supporter_id.to_esc_sql})
@@ -145,7 +150,9 @@ def importeactivists(eactivists)
             #{data['phone_number'].to_esc_sql},
             #{data['supporter_create_date'].to_esc_sql},
             #{data['supporter_modified_date'].to_esc_sql});\n"
-
+      
+      @insertcount['supporter'] += 1
+      
       data['attributes'].each do | attribute |
         sql << "
           IF EXISTS (
@@ -164,6 +171,9 @@ def importeactivists(eactivists)
          ELSE
           INSERT INTO ENsupportersAttributes (supporter_id, attribute, value)
           VALUES (#{supporter_id.to_esc_sql}, #{attribute[0].to_esc_sql}, #{attribute[1].to_esc_sql});"
+
+        @insertcount['attribute'] += 1
+
       end
 
     data['activities'].each do | activity |
@@ -174,9 +184,13 @@ def importeactivists(eactivists)
     @client.execute(sql).do
   end
 
+  log_time("#{@insertcount['supporter']} supporters inserted / updated")
+  log_time("#{@insertcount['attribute']} supporters inserted / updated")
+
 end
 
 savedata(pullrawdata(1), 'raweactivism')
+
 eactivist = organise(loadrawdata)
 
 savedata(eactivist, 'cleaneactivism')
