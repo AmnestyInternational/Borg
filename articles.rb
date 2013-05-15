@@ -92,7 +92,7 @@ def pullgoogleblog
 end
 
 def importarticles
-  dbyml = YAML::load(File.open('yaml/db_settings.yml'))['test_settings']
+  dbyml = YAML::load(File.open('yaml/db_settings.yml'))['prod_settings']
   client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
   log_time("connection to #{dbyml['database']} on #{dbyml['host']} opened, inserting / updating records")
   log_time("inserting / updating #{@articles.length.to_s} articles")
