@@ -79,8 +79,7 @@ Create a user to run the Social-Pull scripts.
     seqn INT IDENTITY PRIMARY KEY,
     post_id VARCHAR(50),
     share_count INT,
-    likes_count INT,sudo useradd --create-home --shell /bin/bash --user-group socialpull
-
+    likes_count INT,
     comments_count INT,
     created datetime default CURRENT_TIMESTAMP,
     updated datetime default CURRENT_TIMESTAMP
@@ -118,6 +117,94 @@ Create a user to run the Social-Pull scripts.
     searchterm VARCHAR(32) NOT NULL,
     max_id BIGINT NULL,
     CONSTRAINT pk_TweetsRefreshUrl PRIMARY KEY (city, searchterm)
+    )
+
+#### Engaging Networks
+
+    USE <dbname>;
+    CREATE TABLE ENsupporters
+    (
+    supporter_id INT PRIMARY KEY NOT NULL,
+    imis_id INT NULL,
+    first_name VARCHAR(32) NULL,
+    last_name VARCHAR(32) NULL,
+    preferred_salutation VARCHAR(32) NULL,
+    title VARCHAR(8) NULL,
+    supporter_email VARCHAR(64) NULL,
+    address VARCHAR(32) NULL,
+    city VARCHAR(32) NULL,
+    postal_code VARCHAR(10) NULL,
+    province VARCHAR(16) NULL,
+    phone_number VARCHAR(16) NULL,
+    supporter_create_date DATE NULL,
+    supporter_modified_date DATE NULL,
+    imported DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    
+    CREATE TABLE ENsupportersAttributes
+    (
+    seqn INT IDENTITY PRIMARY KEY,
+    supporter_id INT NOT NULL,
+    attribute VARCHAR(32) NOT NULL,
+    value VARCHAR(32) NOT NULL,
+    imported DATETIME default CURRENT_TIMESTAMP,
+    updated DATETIME default CURRENT_TIMESTAMP
+    )
+    
+    CREATE TABLE ENsupportersActivities
+    (
+    seqn INT IDENTITY PRIMARY KEY,
+    supporter_id INT NOT NULL,
+    type VARCHAR(16) NOT NULL,
+    id VARCHAR(64) NULL,
+    datetime DATETIME,
+    status VARCHAR(16) NULL,
+    data1 VARCHAR(MAX) NULL,
+    data2 VARCHAR(MAX) NULL,
+    data3 VARCHAR(MAX) NULL,
+    data4 VARCHAR(MAX) NULL,
+    data5 VARCHAR(MAX) NULL,
+    data6 VARCHAR(MAX) NULL,
+    data7 VARCHAR(MAX) NULL,
+    data8 VARCHAR(MAX) NULL,
+    data9 VARCHAR(MAX) NULL,
+    data10 VARCHAR(MAX) NULL,
+    data11 VARCHAR(MAX) NULL,
+    data12 VARCHAR(MAX) NULL,
+    data13 VARCHAR(MAX) NULL,
+    data14 VARCHAR(MAX) NULL,
+    data15 VARCHAR(MAX) NULL,
+    data16 VARCHAR(MAX) NULL,
+    data17 VARCHAR(MAX) NULL,
+    data18 VARCHAR(MAX) NULL,
+    data19 VARCHAR(MAX) NULL,
+    data20 VARCHAR(MAX) NULL,
+    imported DATETIME default CURRENT_TIMESTAMP,
+    updated DATETIME default CURRENT_TIMESTAMP
+    )
+
+#### Articles
+
+    USE <dbname>;
+    CREATE TABLE Articles
+    (
+    url VARCHAR(128) PRIMARY KEY NOT NULL,
+    title VARCHAR(128) NULL,
+    source VARCHAR(32) NULL,
+    type VARCHAR(8) NOT NULL,
+    description TEXT NULL,
+    published DATETIME NULL,
+    imported DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    
+    CREATE TABLE ArticlesAnatomize
+    (
+    url VARCHAR(128) NOT NULL,
+    term VARCHAR(32) NOT NULL,
+    count INT,
+    CONSTRAINT pk_ArticlesAnatomize PRIMARY KEY (url,term)
     )
 
 ### Git clone and set permissions
