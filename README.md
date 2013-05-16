@@ -1,5 +1,5 @@
-Social-Pull
-===========
+Borg
+====
 
 Disclosure statement
 --------------------
@@ -20,7 +20,7 @@ These instructions are designed for Ubuntu 12.04 running Ruby 1.9.1 and SQL Serv
 
 #### Create Ubuntu user
 
-Create a user to run the Social-Pull scripts.
+Create a user to run the Borg scripts.
 
     $ sudo useradd --create-home --shell /bin/bash --user-group <username>
 
@@ -210,9 +210,9 @@ Create a user to run the Social-Pull scripts.
 ### Git clone and set permissions
 
     $ cd /path/to/dir
-    $ git clone https://github.com/AmnestyInternational/Social-Pull.git
+    $ git clone https://github.com/AmnestyInternational/Borg.git
     $ bundle install
-    $ sudo chown -R <username>:<groupname> Social-Pull/
+    $ sudo chown -R <username>:<groupname> Borg/
 
 ### YAML settings
 
