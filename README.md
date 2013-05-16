@@ -232,9 +232,11 @@ It is necessary to include the variable paths in the cron table.
     PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games
     
     # Social media api scripts
-    */10      *      *      *       *       cd /path/to/Social-Pull; ruby fb_page_post_stats.rb;
-    */10      *      *      *       *       cd /path/to/Social-Pull; ruby fb_link_count.rb;
-    27      *      *      *       *       cd /path/to/Social-Pull; ruby twitter.rb;
+    */10    *       *       *       *       cd /srv/Borg; ruby fb_page_post_stats.rb;
+    */10    *       *       *       *       cd /srv/Borg; ruby fb_link_count.rb;
+    45      *       *       *       *       cd /srv/Borg; ruby twitter.rb;
+    15      00      *       *       *       cd /srv/Borg; ruby engaging_networks.rb;
+    55      *       *       *       *       cd /srv/Borg; ruby articles.rb;
 
 Licence
 =======
