@@ -193,7 +193,7 @@ Create a user to run the Borg scripts.
     title VARCHAR(128) NULL,
     source VARCHAR(32) NULL,
     type VARCHAR(8) NOT NULL,
-    description TEXT NULL,
+    description VARCHAR(MAX) NULL,
     published DATETIME NULL,
     imported DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated DATETIME DEFAULT CURRENT_TIMESTAMP
