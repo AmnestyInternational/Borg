@@ -78,13 +78,12 @@ end
 
 def fetch_tweets(city, serach_term)
   result = @client.execute("
-    SELECT max_id
+    SELECT TOP 1 max_id
     FROM TweetsRefreshUrl
-    WHERE city = '#{city[0]}' AND searchterm = '#{serach_term}'
-    ORDER BY max_id DESC")
+    WHERE city = '#{city[0]}' AND searchterm = '#{serach_term}'")
 
-  row = result.each(:first => true) # can make this prettier
-  since_id = row.empty? ? 0 : row[0]['max_id']
+  toprow = result.first
+  since_id = toprow.nil? ? 0 : toprow['max_id']
 
   log_time("since_id = #{since_id}")
   
