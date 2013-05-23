@@ -21,7 +21,6 @@ log_time("Start")
 fbaccesstoken = YAML::load(File.open('yaml/api_tokens.yml'))['api_tokens']['fbaccesstoken']
 
 uri = URI.parse("https://graph.facebook.com/fql?q=SELECT%20post_id%2C%20likes.count%2C%20share_count%2C%20comments.count%2C%20message%2C%20attachment.media%2C%20created_time%2C%20updated_time%2C%20permalink%2C%20parent_post_id%2C%20type%2C%20actor_id%0AFROM%20stream%0AWHERE%20source_id%20%3D%20'#{source_id}'%0AORDER%20BY%20created_time%20DESC%20LIMIT%200%2C#{track}&access_token=#{fbaccesstoken}")
-puts uri.inspect
 http = Net::HTTP.new(uri.host, uri.port)
 http.use_ssl = true
 http.verify_mode = OpenSSL::SSL::VERIFY_NONE # read into this
