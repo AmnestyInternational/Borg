@@ -30,11 +30,6 @@ class String
   end
 end
 
-yml = YAML::load(File.open('yaml/twitter.yml'))
-@result_type = yml['Settings']['result_type']
-@returns_per_page = yml['Settings']['returns_per_page']
-$ignoredwords = yml['IgnoredWords']
-
 def insert_tweets
 
   log_time ("inserting #{@tweet.length} tweet(s)...")
@@ -102,56 +97,69 @@ def fetch_tweets(city, serach_term)
   since_id = tweets["max_id"]
 
   @client.execute("
-  IF EXISTS (SELECT max_id FROM TweetsRefreshUrl WHERE city = '#{city[0]}' AND searchterm = '#{serach_term}')
-    UPDATE TweetsRefreshUrl
-    SET max_id = '#{since_id}'
-    WHERE city = '#{city[0]}' AND searchterm = '#{serach_term}';
-  ELSE
-    INSERT TweetsRefreshUrl (city, searchterm, max_id)
-    VALUES ('#{city[0]}', '#{serach_term}', '#{since_id}');\n").do
+    IF EXISTS (SELECT max_id FROM TweetsRefreshUrl WHERE city = '#{city[0]}' AND searchterm = '#{serach_term}')
+      UPDATE TweetsRefreshUrl
+      SET max_id = '#{since_id}'
+      WHERE city = '#{city[0]}' AND searchterm = '#{serach_term}';
+    ELSE
+      INSERT TweetsRefreshUrl (city, searchterm, max_id)
+      VALUES ('#{city[0]}', '#{serach_term}', '#{since_id}');\n").do
 
   return tweets
 end
 
-dbyml = YAML::load(File.open('yaml/db_settings.yml'))['prod_settings']
-@client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
+def pulltweets
+  dbyml = YAML::load(File.open('yaml/db_settings.yml'))['prod_settings']
+  @client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
 
-@tweet = []
+  @tweet = []
 
-yml['SearchTerms'].each do |serach_term|
+  @yml['SearchTerms'].each do |serach_term|
 
-  yml['Cities'].each do |city|
+    @yml['Cities'].each do |city|
 
-    log_time("polling: " + serach_term.to_s + " from " + city[0].to_s)
+      log_time("polling: " + serach_term.to_s + " from " + city[0].to_s)
 
-    tweets = fetch_tweets(city, serach_term)
+      tweets = fetch_tweets(city, serach_term)
     
-    log_time("returned tweets: " + tweets["results"].length.to_s)
+      log_time("returned tweets: " + tweets["results"].length.to_s)
     
-    tweets["results"].each do |tweet|
-      coordinates = tweet['geo'].nil? ? [] : tweet['geo']['coordinates'] # very few people seem to be geo tweeting but this will be useful in the future
+      tweets["results"].each do |tweet|
+        coordinates = tweet['geo'].nil? ? [] : tweet['geo']['coordinates'] # very few people seem to be geo tweeting but this will be useful in the future
     
-      @tweet << {
-        :id => tweet['id'],
-        :created => Time.parse(tweet['created_at']),
-        :usr => tweet['from_user'],
-        :usr_id => tweet['from_user_id'],
-        :usr_name => tweet['from_user_name'],
-        :coordinates => coordinates,
-        :city => city[0],
-        :location => tweet['location'],
-        :profile_image_url => tweet['profile_image_url'],
-        :text => tweet['text']
-      }
+        @tweet << {
+          :id => tweet['id'],
+          :created => Time.parse(tweet['created_at']),
+          :usr => tweet['from_user'],
+          :usr_id => tweet['from_user_id'],
+          :usr_name => tweet['from_user_name'],
+          :coordinates => coordinates,
+          :city => city[0],
+          :location => tweet['location'],
+          :profile_image_url => tweet['profile_image_url'],
+          :text => tweet['text']
+        }
     
-    end
+      end
   
-  insert_tweets if @tweet.length > 0
+    insert_tweets if @tweet.length > 0
 
-  sleep 5 # We don't want to piss Twitter off by hounding their servers. We'll need to increase this once we have more cities and hash tags
+    sleep 5 # We don't want to piss Twitter off by hounding their servers. We'll need to increase this once we have more cities and hash tags
+    end
+
   end
 
 end
+
+def setvars
+  @yml = YAML::load(File.open('yaml/twitter.yml'))
+  @result_type = @yml['Settings']['result_type']
+  @returns_per_page = @yml['Settings']['returns_per_page']
+  $ignoredwords = @yml['IgnoredWords']
+end
+
+setvars
+pulltweets
 
 log_time("End time\n\n\n")
 
