@@ -84,6 +84,12 @@ SearchTerms:
   - '@aicanadamedia'
   - '@AmnestySecurity'
   - '@AmnestyNow'
+  - '@LGBT_Amnesty'
+  - '@AmnistieCA'
+  - '@AICanadaBHR'
+  - '@AI_WomenRights'
+  - '@AmnestyToronto'
+  - '@AlexNeveAmnesty'
 
 IgnoredWords:
 # Note: Ignored words should be in lower case
