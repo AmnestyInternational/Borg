@@ -70,39 +70,55 @@ def insert_tweets
               '#{tweet[:id]}',
               '#{term}');\n"
       end
+
+    #puts sql
     @client.execute(sql).do
   end
 
   @tweet = []
 end
 
-def fetch_tweets(city, serach_term)
-  result = @client.execute("
-    SELECT TOP 1 max_id
-    FROM TweetsRefreshUrl
-    WHERE city = '#{city[0]}' AND searchterm = '#{serach_term}'")
+def fetch_tweets(region, search_term = nil)
+
+  if search_term.nil?
+    result = @client.execute("
+      SELECT TOP 1 max_id
+      FROM TweetsRefreshUrl
+      WHERE city = '#{region[0]}' AND searchterm = '#{search_term}'")
+  else
+    result = @client.execute("
+      SELECT TOP 1 id 'max_id'
+      FROM Tweets
+      WHERE city = '#{region[0]}'")
+  end
 
   toprow = result.first
   since_id = toprow.nil? ? 0 : toprow['max_id']
 
   log_time("since_id = #{since_id}")
+
+  if search_term.nil?
+    url = "http://search.twitter.com/search.json?geocode=#{region[1]['lat']},#{region[1]['long']},#{region[1]['range']}&result_type=#{@result_type}&rpp=#{@returns_per_page}&since_id=#{since_id}"
+  else
+    url = "http://search.twitter.com/search.json?geocode=#{region[1]['lat']},#{region[1]['long']},#{region[1]['range']}&result_type=#{@result_type}&q=#{search_term.clean_term}&rpp=#{@returns_per_page}&since_id=#{since_id}"
+  end
   
-  log_time("http://search.twitter.com/search.json?geocode=#{city[1]['lat']},#{city[1]['long']},#{city[1]['range']}&result_type=#{@result_type}&q=#{serach_term.clean_term}&rpp=#{@returns_per_page}&since_id=#{since_id}")
+  log_time(url)
   
-  uri = URI("http://search.twitter.com/search.json?geocode=#{city[1]['lat']},#{city[1]['long']},#{city[1]['range']}&result_type=#{@result_type}&q=#{serach_term.clean_term}&rpp=#{@returns_per_page}&since_id=#{since_id}")
+  uri = URI(url)
   response = Net::HTTP.get(uri)
   tweets = JSON.parse(response)
 
   since_id = tweets["max_id"]
 
   @client.execute("
-    IF EXISTS (SELECT max_id FROM TweetsRefreshUrl WHERE city = '#{city[0]}' AND searchterm = '#{serach_term}')
+    IF EXISTS (SELECT max_id FROM TweetsRefreshUrl WHERE city = '#{region[0]}' AND searchterm = '#{search_term}')
       UPDATE TweetsRefreshUrl
       SET max_id = '#{since_id}'
-      WHERE city = '#{city[0]}' AND searchterm = '#{serach_term}';
+      WHERE city = '#{region[0]}' AND searchterm = '#{search_term}';
     ELSE
       INSERT TweetsRefreshUrl (city, searchterm, max_id)
-      VALUES ('#{city[0]}', '#{serach_term}', '#{since_id}');\n").do
+      VALUES ('#{region[0]}', '#{search_term}', '#{since_id}');\n").do
 
   return tweets
 end
@@ -113,17 +129,17 @@ def pulltweets
 
   @tweet = []
 
-  @yml['SearchTerms'].each do |serach_term|
+  @yml['SearchTerms'].each do | search_term |
 
-    @yml['Cities'].each do |city|
+    @yml['Cities'].each do | city |
 
-      log_time("polling: " + serach_term.to_s + " from " + city[0].to_s)
+      log_time("polling: " + search_term.to_s + " from " + city[0].to_s)
 
-      tweets = fetch_tweets(city, serach_term)
+      tweets = fetch_tweets(city, search_term)
     
       log_time("returned tweets: " + tweets["results"].length.to_s)
     
-      tweets["results"].each do |tweet|
+      tweets["results"].each do | tweet |
         coordinates = tweet['geo'].nil? ? [] : tweet['geo']['coordinates'] # very few people seem to be geo tweeting but this will be useful in the future
     
         @tweet << {
@@ -145,6 +161,36 @@ def pulltweets
 
     sleep 5 # We don't want to piss Twitter off by hounding their servers. We'll need to increase this once we have more cities and hash tags
     end
+
+  end
+
+  @yml['Hotspots'].each do | hotspot |
+    log_time("polling: all tweets from " + hotspot[0].to_s)
+
+    tweets = fetch_tweets(hotspot)
+
+    log_time("returned tweets: " + tweets["results"].length.to_s)
+    
+    tweets["results"].each do | tweet |
+      coordinates = tweet['geo'].nil? ? [] : tweet['geo']['coordinates'] # very few people seem to be geo tweeting but this will be useful in the future
+    
+      @tweet << {
+        :id => tweet['id'],
+        :created => Time.parse(tweet['created_at']),
+        :usr => tweet['from_user'],
+        :usr_id => tweet['from_user_id'],
+        :usr_name => tweet['from_user_name'],
+        :coordinates => coordinates,
+        :city => hotspot[0],
+        :location => tweet['location'],
+        :profile_image_url => tweet['profile_image_url'],
+        :text => tweet['text']
+      }
+    end
+  
+    insert_tweets if @tweet.length > 0
+
+    sleep 5 # We don't want to piss Twitter off by hounding their servers. We'll need to increase this once we have more cities and hash tags
 
   end
 
