@@ -76,11 +76,6 @@ SearchTerms:
   - 'amnesty.org'
   - 'amnestyusa.org'
   - 'aiusa.org'
-  - '#humanrights'
-  - '#Guantanamo'
-  - '#FreedomOfExpression'
-  - '#FreeNasrinSotoudeh'
-  - '#deathpenalty'
   - '@aicanadamedia'
   - '@AmnestySecurity'
   - '@AmnestyNow'
@@ -90,6 +85,17 @@ SearchTerms:
   - '@AI_WomenRights'
   - '@AmnestyToronto'
   - '@AlexNeveAmnesty'
+# Topics
+  - '#humanrights'
+  - '#deathpenalty'
+# Current events
+# Turkey
+  - '#occupygezi'
+  - '#direngezipark'
+  - '#Taksim'
+# POC
+  - '#FreeNasrinSotoudeh'
+  - '#Guantanamo'
 
 IgnoredWords:
 # Note: Ignored words should be in lower case
