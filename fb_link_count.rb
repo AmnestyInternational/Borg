@@ -15,7 +15,7 @@ end
 log_time("Start")
 
 # urls to monitor
-urls = YAML::load(File.open('yaml/facebook.yml'))['urls']
+urls = YAML::load(File.open('config/facebook.yml'))['urls']
 
 searchstring = 'SELECT%20share_count,%20like_count,%20comment_count,%20url%20FROM%20link_stat%20WHERE'
 
@@ -27,7 +27,7 @@ http = Net::HTTP.new('graph.facebook.com')
 response = http.request(Net::HTTP::Get.new("/fql?q=#{searchstring[0..-6]}"))
 fbcounts = JSON.parse(response.body)['data']
 
-dbyml = YAML::load(File.open('yaml/db_settings.yml'))['prod_settings']
+dbyml = YAML::load(File.open('config/db_settings.yml'))['prod_settings']
 client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
 
 log_time("inserting details of #{fbcounts.length} links...")

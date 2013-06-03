@@ -98,12 +98,12 @@ SearchTerms:
   - '#Guantanamo'
 
 Hotspots:
-# These are hotspots around the world, protests etc
+# These are hotspots around the world, protests, rallies etc
 # Turkey 2013-06-03
   Gezi:
     lat: 41.038333
     long: 28.986944
-    range: 1km
+    range: 0.5km
 
 IgnoredWords:
 # Note: Ignored words should be in lower case

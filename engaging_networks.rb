@@ -44,7 +44,7 @@ class Hash
 end
 
 def pullrawdata(days)
-  token = YAML::load(File.open('yaml/api_tokens.yml'))['api_tokens']['engagingnetworkstoken']
+  token = YAML::load(File.open('config/api_tokens.yml'))['api_tokens']['engagingnetworkstoken']
   startdate = (Time.now - (days * 24 * 60 * 60)).strftime("%m%d%Y")
 
   log_time("Requesting " + days.to_s + " day(s) of records with : https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml")
@@ -76,7 +76,7 @@ end
 def organise(raweactivism)
   eactivist = Hash.new {|hash,key| hash[key] = Hash.new {|hash,key| hash[key] = [] } }
 
-  structure = YAML::load(File.open('yaml/engagingnetworks.yml'))['structure']
+  structure = YAML::load(File.open('config/engagingnetworks.yml'))['structure']
 
   raweactivism.each do | row |
 
@@ -109,7 +109,7 @@ def organise(raweactivism)
 end
 
 def importeactivists(eactivists)
-  dbyml = YAML::load(File.open('yaml/db_settings.yml'))['prod_settings']
+  dbyml = YAML::load(File.open('config/db_settings.yml'))['prod_settings']
   client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
   log_time("connection to #{dbyml['database']} on #{dbyml['host']} opened, inserting / updating records")
   log_time("inserting / updating #{eactivists.length} supporters")
