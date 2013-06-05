@@ -3,16 +3,20 @@ Newspaper:
     WOEID: 23424775
     rss:
       - http://www.theglobeandmail.com/news/?service=rss
+  The National Post:
+    WOEID: 4118
+    rss:
+      -
   The Record:
     WOEID: 23396898
     rss:
       - http://www.therecord.com/feeds?types=article&query=fullcategory:/news&FilterQueries=category:therecord&orderby=releasetimestamp+desc
-  Toronto Sun:
-    WOEID: 4118
-    rss:
-      - http://www.torontosun.com/home/rss.xml
-      - http://www.torontosun.com/news/world/rss.xml
-      - http://www.torontosun.com/news/canada/rss.xml
+#  Toronto Sun:
+#    WOEID: 4118
+#    rss:
+#      - http://www.torontosun.com/home/rss.xml
+#      - http://www.torontosun.com/news/world/rss.xml
+#      - http://www.torontosun.com/news/canada/rss.xml
 
 Online:
   Google News:
@@ -26,3 +30,11 @@ Online:
       - http://rss.cbc.ca/lineup/world.xml
       - http://rss.cbc.ca/lineup/canada.xml
       - http://rss.cbc.ca/lineup/politics.xml
+  Canada.com:
+    WOEID: 4118
+    rss:
+      -
+  MacLeans:
+    WOEID: 4118
+    rss:
+      -
