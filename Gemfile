@@ -5,3 +5,8 @@ gem 'xml-simple'
 gem 'tiny_tds'
 
 gem 'activesupport'
+
+gem 'twitter'
+
+gem 'json', '~> 1.7.7'
+

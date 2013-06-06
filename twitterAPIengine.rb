@@ -6,6 +6,7 @@ require 'yaml'
 require 'time'
 require 'iconv'
 require 'logger'
+require 'twitter'
 
 def log_time(input)
   puts Time.now.to_s + ", " + input
@@ -19,6 +20,15 @@ def setvars
   $ignoredwords = @yml['IgnoredWords']
   dbyml = YAML::load(File.open('config/db_settings.yml'))['prod_settings']
   @client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
+
+  tokens = YAML::load(File.open('config/api_tokens.yml'))['api_tokens']['twitter']
+  Twitter.configure do |config|
+    config.consumer_key = tokens['consumer_key']
+    config.consumer_secret = tokens['consumer_secret']
+    config.oauth_token = tokens['oauth_token']
+    config.oauth_token_secret = tokens['oauth_token_secret']
+  end
+
 end
 
 class String
@@ -46,7 +56,7 @@ def insert_tweets(tweets)
         IF EXISTS (SELECT id FROM tweets WHERE id = '#{tweet[:id]}')
           SELECT 'Do nothing' ;
         ELSE
-          INSERT tweets (id, usr, usr_id, usr_name, city, location, geo, profile_image_url, text, created)
+          INSERT tweets (id, usr, usr_id, usr_name, city, location, profile_image_url, text, created)
           VALUES (
             '#{tweet[:id]}',
             '#{tweet[:usr].to_s.to_esc_sql}',
@@ -54,15 +64,18 @@ def insert_tweets(tweets)
             '#{tweet[:usr_name].to_s.to_esc_sql}',
             '#{tweet[:city]}',
             '#{tweet[:location].to_s.to_esc_sql}',
-            CASE WHEN '#{tweet[:coordinates][0]}' = '' THEN
-              NULL
-            ELSE
-              geography::STPointFromText('POINT(' + CAST('#{tweet[:coordinates][1]}' AS VARCHAR(20)) + ' ' + CAST('#{tweet[:coordinates][0]}' AS VARCHAR(20)) + ')', 4326)
-            END,
             '#{tweet[:profile_image_url]}',
             '#{tweet[:text].to_s.to_esc_sql}',
             CONVERT(DATETIME, LEFT('#{tweet[:created]}', 19))
             );\n"
+
+#            geo,
+
+#            CASE WHEN '#{tweet[:coordinates][0]}' = '' THEN
+#              NULL
+#            ELSE
+#              geography::STPointFromText('POINT(' + CAST('#{tweet[:coordinates][1]}' AS VARCHAR(20)) + ' ' + CAST('#{tweet[:coordinates][0]}' AS VARCHAR(20)) + ')', 4326)
+#            END,
       
       terms = tweet[:text].anatomize
       
@@ -77,15 +90,15 @@ def insert_tweets(tweets)
               '#{tweet[:id]}',
               '#{term}');\n"
       end
-
+    
     @client.execute(sql).do
   end
 
 end
 
-def fetch_tweets(region, search_term = nil)
+def fetch_tweets(region, search_term = '')
 
-  if search_term.nil?
+  if search_term = ''
     result = @client.execute("
       SELECT MAX(id) 'max_id'
       FROM Tweets
@@ -98,58 +111,32 @@ def fetch_tweets(region, search_term = nil)
   end
 
   toprow = result.first
-  since_id = toprow.nil? ? 0 : toprow['max_id']
+  since_id = toprow.nil? ? 0 : toprow['max_id'].to_i
 
   log_time("since_id = #{since_id}")
 
-  if search_term.nil?
-    url = "http://search.twitter.com/search.json?geocode=#{region[1]['lat']},#{region[1]['long']},#{region[1]['range']}&result_type=#{@result_type}&rpp=#{@returns_per_page}&since_id=#{since_id}"
-  else
-    url = "http://search.twitter.com/search.json?geocode=#{region[1]['lat']},#{region[1]['long']},#{region[1]['range']}&result_type=#{@result_type}&q=#{search_term.clean_term}&rpp=#{@returns_per_page}&since_id=#{since_id}"
-  end
-  
-  log_time(url)
-  
-  uri = URI(url)
-  response = Net::HTTP.get(uri)
-  rawtweetdata = JSON.parse(response)
+  rawtweetdata = Twitter.search(search_term.clean_term, :geocode => "#{region[1]['lat']},#{region[1]['long']},#{region[1]['range']}", :count => @returns_per_page, :result_type => @result_type, :since_id => since_id).results #since_id not working
 
-  log_time("returned tweets: " + rawtweetdata["results"].length.to_s)
-
-  unless search_term.nil?
-    since_id = rawtweetdata["max_id"]
-
-    @client.execute("
-      IF EXISTS (SELECT max_id FROM TweetsRefreshUrl WHERE city = '#{region[0]}' AND searchterm = '#{search_term}')
-        UPDATE TweetsRefreshUrl
-        SET max_id = '#{since_id}'
-        WHERE city = '#{region[0]}' AND searchterm = '#{search_term}';
-      ELSE
-        INSERT TweetsRefreshUrl (city, searchterm, max_id)
-        VALUES ('#{region[0]}', '#{search_term}', '#{since_id}');\n").do
-
-    log_time("since_id set to #{since_id}")
-  end
+  log_time("returned tweets: " + rawtweetdata.length.to_s)
   
   tweets = []
-  
-  rawtweetdata["results"].each do | rawtweet |
 
-    coordinates = rawtweet['geo'].nil? ? [] : rawtweet['geo']['coordinates'] # very few people seem to be geo tweeting but this will be useful in the future
-    
-    tweets << {
-      :id => rawtweet['id'],
-      :created => Time.parse(rawtweet['created_at']),
-      :usr => rawtweet['from_user'],
-      :usr_id => rawtweet['from_user_id'],
-      :usr_name => rawtweet['from_user_name'],
-      :coordinates => coordinates,
+  if rawtweetdata
+    rawtweetdata.map! do | rawtweet |
+
+      tweets << {
+      :id => rawtweet.id,
+      :created => Time.parse(rawtweet.created_at.to_s),
+      :usr => rawtweet.user.screen_name,
+      :usr_id => rawtweet.user.id,
+      :usr_name => rawtweet.user.name,
+      :coordinates => rawtweet.geo, #not working atm
       :city => region[0],
-      :location => rawtweet['location'],
-      :profile_image_url => rawtweet['profile_image_url'],
-      :text => rawtweet['text']
+      :location => rawtweet.user.location,
+      :profile_image_url => rawtweet.user.profile_image_url_https,
+      :text => rawtweet.text
     }
-
+    end
   end
 
   return tweets
