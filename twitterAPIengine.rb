@@ -56,27 +56,24 @@ def insert_tweets(tweets)
         IF EXISTS (SELECT id FROM tweets WHERE id = '#{tweet[:id]}')
           SELECT 'Do nothing' ;
         ELSE
-          INSERT tweets (id, usr, usr_id, usr_name, city, location, profile_image_url, text, created)
+          INSERT tweets (id, usr, usr_id, usr_name, city, geo, location, profile_image_url, text, created)
           VALUES (
             '#{tweet[:id]}',
             '#{tweet[:usr].to_s.to_esc_sql}',
             '#{tweet[:usr_id]}',
             '#{tweet[:usr_name].to_s.to_esc_sql}',
             '#{tweet[:city]}',
+            CASE WHEN '#{tweet[:coordinates][0]}' = '' THEN
+              NULL
+            ELSE
+              geography::STPointFromText('POINT(' + CAST('#{tweet[:coordinates][1]}' AS VARCHAR(20)) + ' ' + CAST('#{tweet[:coordinates][0]}' AS VARCHAR(20)) + ')', 4326)
+            END,
             '#{tweet[:location].to_s.to_esc_sql}',
             '#{tweet[:profile_image_url]}',
             '#{tweet[:text].to_s.to_esc_sql}',
             CONVERT(DATETIME, LEFT('#{tweet[:created]}', 19))
             );\n"
 
-#            geo,
-
-#            CASE WHEN '#{tweet[:coordinates][0]}' = '' THEN
-#              NULL
-#            ELSE
-#              geography::STPointFromText('POINT(' + CAST('#{tweet[:coordinates][1]}' AS VARCHAR(20)) + ' ' + CAST('#{tweet[:coordinates][0]}' AS VARCHAR(20)) + ')', 4326)
-#            END,
-      
       terms = tweet[:text].anatomize
       
       terms.each do |term|
@@ -128,13 +125,15 @@ def fetch_tweets(region, search_term = '')
   if rawtweetdata
     rawtweetdata.map! do | rawtweet |
 
+      coordinates = rawtweet.geo.nil? ? [] : rawtweet.geo.coordinates
+
       tweets << {
       :id => rawtweet.id,
       :created => Time.parse(rawtweet.created_at.to_s),
       :usr => rawtweet.user.screen_name,
       :usr_id => rawtweet.user.id,
       :usr_name => rawtweet.user.name,
-      :coordinates => rawtweet.geo, #not working atm
+      :coordinates => coordinates,
       :city => region[0],
       :location => rawtweet.user.location,
       :profile_image_url => rawtweet.user.profile_image_url_https,
