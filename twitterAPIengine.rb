@@ -98,7 +98,7 @@ end
 
 def fetch_tweets(region, search_term = '')
 
-  if search_term = ''
+  if search_term == ''
     result = @client.execute("
       SELECT MAX(id) 'max_id'
       FROM Tweets
@@ -115,7 +115,9 @@ def fetch_tweets(region, search_term = '')
 
   log_time("since_id = #{since_id}")
 
-  rawtweetdata = Twitter.search(search_term.clean_term, :geocode => "#{region[1]['lat']},#{region[1]['long']},#{region[1]['range']}", :count => @returns_per_page, :result_type => @result_type, :since_id => since_id).results #since_id not working
+  log_time("#{search_term}, :geocode => #{region[1]['lat']},#{region[1]['long']},#{region[1]['range']}, :count => #{@returns_per_page}, :result_type => #{@result_type}, :since_id => #{since_id}")
+
+  rawtweetdata = Twitter.search(search_term, :geocode => "#{region[1]['lat']},#{region[1]['long']},#{region[1]['range']}", :count => @returns_per_page, :result_type => @result_type, :since_id => since_id).results
 
   log_time("returned tweets: " + rawtweetdata.length.to_s)
   
