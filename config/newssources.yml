@@ -38,15 +38,32 @@ Online:
     WOEID: 4118
     rss:
       -
-  Rabble:
+  Rabble: # http://rabble.ca/
     WOEID: 4118
     rss:
       - 
-  Sun:
+  Sun: # http://www.sunnewsnetwork.ca/
     WOIED: 4118
     rss:
       -
-  CTVNews:
+  CTVNews: # http://www.ctvnews.ca/
     WOIED: 4118
     rss:
       -
+      
+# Others to investigate
+# Non-Canadian news organizations that report on Canada:
+# NY Times http://topics.nytimes.com/top/news/international/countriesandterritories/canada/index.html
+# Guardian http://www.guardian.co.uk/world/canada?INTCMP=SRCH
+# BBC http://www.bbc.com/news/world/us_and_canada/
+# The Economist http://www.economist.com/topics/canada
+# Foreign Policy http://www.foreignpolicy.com/category/topic/canada
+# FP, see also http://blog.foreignpolicy.com/category/topic/human_rights
+
+# General Interest National Magazines
+# The Walrus http://thewalrus.ca/
+# The Dominion http://www.dominionpaper.ca/
+# Maisonneuve http://www.maisonneuve.org/
+
+# Special Interest Magazines
+# Diplomat and International http://diplomatonline.com/mag/
