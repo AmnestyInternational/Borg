@@ -99,11 +99,13 @@ end
 def fetch_tweets(region, search_term = '')
 
   if search_term == ''
+    log_time("pulling since_id from Tweets")
     result = @client.execute("
       SELECT MAX(id) 'max_id'
       FROM Tweets
       WHERE city = '#{region[0]}'")
   else
+    log_time("pulling since_id from TweetsRefreshUrl")
     result = @client.execute("
       SELECT TOP 1 max_id
       FROM TweetsRefreshUrl
