@@ -5,68 +5,95 @@ Settings:
 # * mixed: include both popular and real time results in the response.
 # * recent: return only the most recent results in the response
 # * popular: return only the most popular results in the response.
-# returns_per_page max of 100
 
-Cities:
+Regions:
 # These are the largest 14 cities in Canada
   GTA:
-    lat: 43.7
-    long: -79.416
-    range: 40km
+    area:
+      -  
+        lat: 43.7
+        long: -79.416
+        range: 40km
   Montreal:
-    lat: 45.509
-    long: -73.588
-    range: 40km
+    area:
+      -  
+        lat: 45.509
+        long: -73.588
+        range: 40km
   Vancouver:
-    lat: 49.25
-    long: -123.119
-    range: 20km
+    area:
+      -  
+        lat: 49.25
+        long: -123.119
+        range: 20km
     comment: Vancouver is close to the border so it has a smaller range
   Calgary:
-    lat: 51.05
-    long: -114.085
-    range: 40km
+    area:
+      -  
+        lat: 51.05
+        long: -114.085
+        range: 40km
   Ottawa:
-    lat: 45.411
-    long: -75.698
-    range: 40km
+    area:
+      -  
+        lat: 45.411
+        long: -75.698
+        range: 40km
   Edmonton:
-    lat: 53.55
-    long: -113.469
-    range: 40km
+    area:
+      -  
+        lat: 53.55
+        long: -113.469
+        range: 40km
   Winnipeg:
-    lat: 49.884
-    long: -97.147
-    range: 40km
+    area:
+      -  
+        lat: 49.884
+        long: -97.147
+        range: 40km
   Quebec City:
-    lat: 46.812
-    long: -71.215
-    range: 40km
+    area:
+      -  
+        lat: 46.812
+        long: -71.215
+        range: 40km
   Halifax:
-    lat: 44.647
-    long: -63.574
-    range: 40km
+    area:
+      -  
+        lat: 44.647
+        long: -63.574
+        range: 40km
   Kitchener:
-    lat: 43.45
-    long: -80.483
-    range: 40km
+    area:
+      -  
+        lat: 43.45
+        long: -80.483
+        range: 40km
   London:
-    lat: 42.984
-    long: -81.250
-    range: 20km
+    area:
+      -  
+        lat: 42.984
+        long: -81.250
+        range: 20km
   Victoria:
-    lat: 48.422
-    long: -123.366
-    range: 20km
+    area:
+      -  
+        lat: 48.422
+        long: -123.366
+        range: 20km
   St Catharines:
-    lat: 43.183
-    long: -79.233
-    range: 10km
+    area:
+      -  
+        lat: 43.183
+        long: -79.233
+        range: 10km
     comment: St Catharines is very close to the border so it has a smaller range
   Oshawa:
-    lat: 43.9
-    long: -78.85
-    range: 5km
+    area:
+      -  
+        lat: 43.9
+        long: -78.85
+        range: 5km
 
 SearchTerms:
 # Note: 'amnesty.org' will also return results for 'amnesty.org.au' and 'amnesty.org.uk'
@@ -97,13 +124,34 @@ SearchTerms:
   - '#FreeNasrinSotoudeh'
   - '#Guantanamo'
 
-Hotspots:
-# These are hotspots around the world, protests, rallies etc
-# Turkey 2013-06-03
+ActivityZone:
+# These are hotspots around the world, protests, rallies etc. A hotspot consists of an array circles
+# Turkey protests in Gezi
   Gezi:
-    lat: 41.038333
-    long: 28.986944
-    range: 0.5km
+    startdate: '2013-06-01'
+    enddate: '2013-06-30'
+    area:
+      -  
+        lat: 41.038333
+        long: 28.986944
+        range: 0.5km
+# Toronto Pride March
+#  TorontoPride:
+#    startdate: '2013-06-21'
+#    enddate: '2013-06-30'
+#    area:
+#      -  
+#        lat: 43.669672
+#        long: -79.384957
+#        range: 0.3km
+#      -  
+#        lat: 43.667173
+#        long: -79.385086
+#        range: 0.2km
+#      -  
+#        lat: 43.66618
+#        long: -79.383498
+#        range: 0.3km
 
 IgnoredWords:
 # Note: Ignored words should be in lower case
