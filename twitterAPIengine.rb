@@ -54,7 +54,7 @@ def insert_tweet_user_mentions(user_mentions)
 
   exit unless user_mentions.length > 0
 
-  log_time ("inserting / updating #{user_mentions.length} user_mentions(s)...")
+  log_time ("inserting #{user_mentions.length} user_mentions(s)...")
   sql = String.new
 
   user_mentions.each do | user_mention |
@@ -76,7 +76,7 @@ def insert_tweet_hashtags(hashtags)
 
   exit unless hashtags.length > 0
 
-  log_time ("inserting / updating #{hashtags.length} hashtags(s)...")
+  log_time ("inserting #{hashtags.length} hashtags(s)...")
   sql = String.new
 
   hashtags.each do | hashtag |
@@ -99,7 +99,7 @@ def insert_tweet_urls(urls)
 
   exit unless urls.length > 0
 
-  log_time ("inserting / updating #{urls.length} url(s)...")
+  log_time ("inserting #{urls.length} url(s)...")
   sql = String.new
 
   urls.each do | url |
@@ -122,7 +122,7 @@ def insert_tweet_regions(regions)
 
   exit unless regions.length > 0
 
-  log_time ("inserting / updating #{regions.length} region(s)...")
+  log_time ("inserting #{regions.length} region(s)...")
   sql = String.new
 
   regions.each do | region |
@@ -326,7 +326,7 @@ def fetch_tweet_data(region, search_term = '')
         rawtweet.user_mentions.map! do | mention |
           tweetdata['tweetusermentions'] << {
             :tweet_id => rawtweet.id,
-            :usr_id => mention.id.to_s }
+            :usr_id => mention.id }
         end
       end
 

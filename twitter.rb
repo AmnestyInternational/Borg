@@ -27,6 +27,8 @@ def pulltweets
       sleep 1
       insert_tweets_anatomized(tweetdata['tweetsanatomize']) if tweetdata['tweetsanatomize'].length > 0
       sleep 1
+      insert_tweet_user_mentions(tweetdata['tweetusermentions']) if tweetdata['tweetusermentions'].length > 0
+      sleep 1
 
     end
 
