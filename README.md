@@ -89,6 +89,8 @@ Create a user to run the Borg scripts.
 
     USE <dbname>;
     
+    # Tables
+
     CREATE TABLE Tweets
     (
     id BIGINT PRIMARY KEY NOT NULL,
@@ -152,6 +154,38 @@ Create a user to run the Borg scripts.
     region VARCHAR(32) NOT NULL,
     CONSTRAINT pk_TweetRegion PRIMARY KEY (tweet_id,region)
     )
+
+    # Views
+
+    CREATE VIEW vAI_Tweets AS
+      SELECT
+        T.id,
+        TU.screen_name,
+        TU.name,
+        TR.region,
+        TU.location,
+        T.coordinates,
+        TU.profile_image_url,
+        T.text,
+        T.created,
+        T.imported,
+        TU.followers_count,
+        TU.friends_count,
+        TU.statuses_count 'tweet_count',
+        DATEDIFF(DAY, TU.created_at, GETDATE()) 'days_active',
+        CASE WHEN (DATEDIFF(DAY, TU.created_at, GETDATE())) = 0 THEN
+          TU.statuses_count
+        ELSE
+          (TU.statuses_count / (DATEDIFF(DAY, TU.created_at, GETDATE())))
+        END 'tweets_per_day'
+      FROM
+        Tweets AS T
+        INNER JOIN
+        TwitterUsers AS TU
+        ON T.usr_id = TU.id
+        INNER JOIN
+        TweetRegions AS TR
+        ON T.id = TR.tweet_id
 
 #### Engaging Networks
 
