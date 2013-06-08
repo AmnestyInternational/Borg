@@ -18,7 +18,7 @@ def setvars
   @result_type = @yml['Settings']['result_type']
   @returns_per_page = @yml['Settings']['returns_per_page']
   $ignoredwords = @yml['IgnoredWords']
-  dbyml = YAML::load(File.open('config/db_settings.yml'))['test_settings']
+  dbyml = YAML::load(File.open('config/db_settings.yml'))['prod_settings']
   @client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
   log_time ("connected to #{dbyml['database']} on #{dbyml['host']}")
 
