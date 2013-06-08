@@ -186,6 +186,13 @@ Create a user to run the Borg scripts.
         INNER JOIN
         TweetRegions AS TR
         ON T.id = TR.tweet_id
+        
+    CREATE VIEW vAI_CanadianTweets AS
+      SELECT *
+      FROM vAI_Tweets
+      WHERE
+        region IN ('GTA', 'London', 'Calgary', 'Montreal', 'Victoria', 'Ottawa', 'Winnipeg', 'Oshawa', 'Edmonton', 'St Catharines', 'Kitchener', 'Vancouver', 'Halifax', 'Quebec City')
+
 
 #### Engaging Networks
 
