@@ -19,7 +19,7 @@ def pulltweets
       sleep 1
       insert_twitter_users(tweetdata['twitterusers']) if tweetdata['twitterusers'].length > 0
       sleep 1
-      insert_tweet_user_mentions(tweetdata['tweetusermentions']) if tweetdata['tweetusermentions'].length > 0
+      insert_tweet_regions(tweetdata['tweetregions']) if tweetdata['tweetregions'].length > 0
       sleep 1
       insert_tweet_hashtags(tweetdata['tweethashtags']) if tweetdata['tweethashtags'].length > 0
       sleep 1
