@@ -266,9 +266,27 @@ def fetch_tweet_data(region, search_term = '')
   long = region[1]['area'][0]['long']
   range = region[1]['area'][0]['range']
 
-# come up with new since_id queries
+  if search_term == ''
+    result = @client.execute("
+      SELECT MAX(id) 'max_id'
+      FROM vAI_Tweets
+      WHERE region = '#{regionname}'")
+  else
+    result = @client.execute("
+      SELECT TOP 1 id 'max_id'
+      FROM
+        Tweets AS T
+        LEFT JOIN
+        TweetRegions AS TR
+        ON T.id = TR.tweet_id
+      WHERE
+        TR.region = '#{regionname}' AND
+        imported < DATEADD(HOUR, -12, GETDATE())
+      ORDER BY imported DESC")
+  end
 
-  since_id = 0
+  toprow = result.first
+  since_id = toprow.nil? ? 0 : toprow['max_id'].to_i
 
   log_time("since_id = #{since_id}")
 

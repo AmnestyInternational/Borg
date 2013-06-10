@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require_relative 'twitterAPIengine'
 
-$LOG = Logger.new('log/twitterHotspots.log')   
+$LOG = Logger.new('log/twitterActivityZones.log')   
 
 log_time("Start time")
 

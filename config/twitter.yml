@@ -1,5 +1,6 @@
 Settings:
   result_type: recent
+  run_freq: 4 # in hours
   returns_per_page: 100
 # result_type example values;
 # * mixed: include both popular and real time results in the response.
