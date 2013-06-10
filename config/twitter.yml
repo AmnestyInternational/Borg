@@ -115,8 +115,9 @@ SearchTerms:
 # Topics
   - '#humanrights'
   - '#deathpenalty'
-# 23rd regular session of the Human Rights Council
+# Human Rights Council (23rd regular session)
   - '#HRC23'
+  - 'ohchr.org'
 # Current events
 # Turkey
   - '#occupygezi'
