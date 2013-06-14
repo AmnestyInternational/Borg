@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-require_relative 'twitterAPIengine'
+require_relative 'lib/twitterAPIengine'
 
 $LOG = Logger.new('log/twitter.log')   
 
