@@ -119,11 +119,14 @@ SearchTerms:
 # Human Rights Council (23rd regular session)
   - '#HRC23'
   - 'ohchr.org'
+  - '#UNHRC'
+  - '#MyBodyMyRights'
 # Current events
 # Turkey
   - '#occupygezi'
   - '#direngezipark'
   - '#Taksim'
+  - '#insanhakları'
 # POC
   - '#FreeNasrinSotoudeh'
   - '#Guantanamo'
