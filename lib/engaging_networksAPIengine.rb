@@ -50,6 +50,7 @@ def pullrawdata(days)
   http.read_timeout = 480 * 60 # the pulling process needs a huge timeout
   http.use_ssl = true
   http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+  http.ssl_version = :TLSv1
   response = http.get(uri.request_uri)
   puts "pre nokogiri"
   raweactivismxml = Nokogiri::XML(response.body.force_encoding("ISO-8859-1").encode("UTF-8"))
