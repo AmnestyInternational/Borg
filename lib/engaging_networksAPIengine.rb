@@ -52,14 +52,11 @@ def pullrawdata(days)
   http.verify_mode = OpenSSL::SSL::VERIFY_NONE
   http.ssl_version = :TLSv1
   response = http.get(uri.request_uri)
-  puts "pre nokogiri"
   raweactivismxml = Nokogiri::XML(response.body.force_encoding("ISO-8859-1").encode("UTF-8"))
-  puts "post nokogiri"
   raweactivism = XmlSimple.xml_in(raweactivismxml.to_xml)['rows'][0]['row']
 
   log_time(raweactivism.length.to_s + " records imported...")
-  return raweactivism.inspect
-
+  return raweactivism
 end
 
 def savedata(inputdata, filename)
@@ -68,13 +65,13 @@ def savedata(inputdata, filename)
   log_time("tmp/#{filename}.yml created with #{inputdata.length.to_s} records")
 end
 
-def loadrawdata
-  raweactivism = YAML::load(File.open('tmp/raweactivism.yml'))
-  log_time(raweactivism.length.to_s + " records loaded from tmp/raweactivism.yml")
-  raweactivism
+def loaddata(filename)
+  data = YAML::load(File.open("tmp/#{filename}.yml"))
+  log_time(data.length.to_s + " records loaded from tmp/#{filename}.yml")
+  data
 end
 
-def organise(raweactivism)
+def organiseactivismdata(raweactivism)
   eactivist = Hash.new {|hash,key| hash[key] = Hash.new {|hash,key| hash[key] = [] } }
 
   structure = YAML::load(File.open('config/engagingnetworks.yml'))['structure']
@@ -182,7 +179,6 @@ def importeactivists(eactivists)
       end
 
     data['activities'].each do | activity |
-      puts activity.inspect
       sql << "
           IF EXISTS (
             SELECT seqn
@@ -274,7 +270,6 @@ def importeactivists(eactivists)
         insertcount['activity'] += 1
     end
 
-    puts sql
     client.execute(sql).do
   end
 
