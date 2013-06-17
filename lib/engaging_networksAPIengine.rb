@@ -47,7 +47,7 @@ def pullrawdata(days)
 
   uri = URI.parse("https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml")
   http = Net::HTTP.new(uri.host, uri.port)
-  http.read_timeout = 480 * 60 # the pulling process needs a huge timeout
+  http.read_timeout = 14400 # the pulling process needs a huge timeout, this is 4 hours in seconds
   http.use_ssl = true
   http.verify_mode = OpenSSL::SSL::VERIFY_NONE
   http.ssl_version = :TLSv1

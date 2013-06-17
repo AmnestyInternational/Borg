@@ -7,7 +7,7 @@ require_relative 'lib/engaging_networksAPIengine'
 
 log_time("Start time")
 
-rawactivismdata = pullrawdata(7)
+rawactivismdata = pullrawdata(4)
 
 savedata(rawactivismdata, 'raweactivism')
 
