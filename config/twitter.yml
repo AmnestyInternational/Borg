@@ -124,6 +124,10 @@ SearchTerms:
   - 'ohchr.org'
   - '#UNHRC'
   - '#MyBodyMyRights'
+# The Real Housewives of Vancouver
+  - '@RHOVancouver'
+  - '#RHOV'
+  - '@MaryZilba'
 # Current events
 # Turkey
   - '#occupygezi'
