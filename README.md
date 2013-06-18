@@ -312,6 +312,30 @@ It is necessary to include the variable paths in the cron table.
     45      *       *       *       *       cd /srv/Borg; ruby twitter.rb;
     15      00      *       *       *       cd /srv/Borg; ruby engaging_networks.rb;
     55      *       *       *       *       cd /srv/Borg; ruby articles.rb;
+    
+References
+==========
+
+### Engaging Networks
+
+Campaign Type Codes
+
+| Type of Activity                                    | Default code           |
+| --------------------------------------------------- |:----------------------:|
+| email to target                                     | ET                     |
+| data capture                                        | DC                     |
+| tell-a-friend                                       | TAF                    |
+| broadcast email                                     | B                      |
+| jamii registration                                  | J                      |
+| jamii custom form                                   | JF                     |
+| question checkbox                                   | Q                      |
+| question multiple                                   | QM                     |
+| donation page                                       | TAF                    |
+| donation page – credit/debit card single payment    | CREDIT/DEBIT_SINGLE    |
+| donation page – credit/debit card recurring payment | CREDIT/DEBIT_RECURRING |
+| donation page – bank single payment                 | BANK_SINGLE            |
+| donation page – bank recurring payment              | BANK_RECURRING         |
+
 
 Licence
 =======
