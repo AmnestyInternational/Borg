@@ -6,91 +6,93 @@ Settings:
 # * mixed: include both popular and real time results in the response.
 # * recent: return only the most recent results in the response
 # * popular: return only the most popular results in the response.
+  default_timezone: Eastern Time (US & Canada)
+# There is a list of suitable timezones here http://api.rubyonrails.org/classes/ActiveSupport/TimeZone.html
 
 Regions:
 # These are the largest 14 cities in Canada
   GTA:
-    area:
+    areas:
       -  
         lat: 43.7
         long: -79.416
         range: 40km
   Montreal:
-    area:
+    areas:
       -  
         lat: 45.509
         long: -73.588
         range: 40km
   Vancouver:
-    area:
+    areas:
       -  
         lat: 49.25
         long: -123.119
         range: 20km
     comment: Vancouver is close to the border so it has a smaller range
   Calgary:
-    area:
+    areas:
       -  
         lat: 51.05
         long: -114.085
         range: 40km
   Ottawa:
-    area:
+    areas:
       -  
         lat: 45.411
         long: -75.698
         range: 40km
   Edmonton:
-    area:
+    areas:
       -  
         lat: 53.55
         long: -113.469
         range: 40km
   Winnipeg:
-    area:
+    areas:
       -  
         lat: 49.884
         long: -97.147
         range: 40km
   Quebec City:
-    area:
+    areas:
       -  
         lat: 46.812
         long: -71.215
         range: 40km
   Halifax:
-    area:
+    areas:
       -  
         lat: 44.647
         long: -63.574
         range: 40km
   Kitchener:
-    area:
+    areas:
       -  
         lat: 43.45
         long: -80.483
         range: 40km
   London:
-    area:
+    areas:
       -  
         lat: 42.984
         long: -81.250
         range: 20km
   Victoria:
-    area:
+    areas:
       -  
         lat: 48.422
         long: -123.366
         range: 20km
   St Catharines:
-    area:
+    areas:
       -  
         lat: 43.183
         long: -79.233
         range: 10km
     comment: St Catharines is very close to the border so it has a smaller range
   Oshawa:
-    area:
+    areas:
       -  
         lat: 43.9
         long: -78.85
@@ -138,34 +140,126 @@ SearchTerms:
   - '#FreeNasrinSotoudeh'
   - '#Guantanamo'
 
+Users:
+# Wonderful and influential Canadian supporters
+#  - 'MaryZilba'
+#  - 'Dankanter'
+
+# Influential users tweeting about Amnesty International from Canadian cities (100+ RTs also from within Canadian cities)
+#  - 'GurbetName'
+#  - 'AmnistieCA'
+  - 'AmnestyNow'
+  - 'Proteautype'
+  - 'frogsarelovely'
+  - 'AmnestySecurity'
+  - 'elifgunce'
+  - 'CWP_CSP'
+  - 'rob_bieber'
+  - 'AlexNeveAmnesty'
+
+# Influential users tweeting from Gezi (100+ RTs from within the park)
+  - 'meldaonur'
+  - 'barbarosaltug'
+  - 'cizenbayan'
+  - 'BenjaminHarvey'
+  - 'denizella01'
+  - 'Bondarenko_RT'
+  - 'suhancebeci'
+  - 'obasturk'
+  - 'BlogcuAnne'
+  - 'Muratuslu11Uslu'
+  - 'umitbektas'
+  - 'BirGun_Gazetesi'
+  - 'DalgaTrek'
+  - 'djerkansen'
+  - 'pinarcaki'
+  - 'TheRedHack'
+  - 'DerekStoffelCBC'
+  - 'DeryaCskndnz'
+  - 'harikahuygur'
+  - 'bengiunsal'
+  - 'EminCapa'
+  - 'aliemredo'
+  - 'suleymansoylu'
+  - 'tansuakpinar'
+  - 'muhtar0_o'
+  - 'hakanyufkacgil'
+  - 'ertansuzgun'
+  - 'Lastroloji'
+  - 'tigella'
+  - 'frogsarelovely'
+  - 'tayfun_kahraman'
+  - 'slymndincer'
+  - 'Akasyaa'
+  - 'Sdf_____'
+  - 'cargun'
+  - 'buraksinema'
+  - 'elifgunce'
+  - 'semihsayginer'
+  - 'taksimdayanisma'
+  - '_onurozbas_'
+  - 'elchunli'
+  - 'EsinGorur'
+  - 'umuties'
+  - 'AtlantisliAdam'
+  - 'adnanbulutt'
+  - 'Agresivio_Gergo'
+  - 'esex2'
+  - 'anlamarama'
+  - 'nihatsirdar'
+  - 'FeyzaDuran'
+
+# Accused human rights violators
+# Bahrain
+#  - 'ADEL_FELAIFIL'
+
 ActivityZone:
 # These are hotspots around the world, protests, rallies etc. A hotspot consists of an array circles
 # Turkey protests in Gezi
   Gezi:
-    startdate: '2013-06-01'
-    enddate: '2013-06-30'
-    area:
+    start: 2013-06-01
+    end: 2013-07-15
+    timezone: Istanbul
+    areas:
       -  
         lat: 41.038333
         long: 28.986944
         range: 0.5km
+# World Refugee Day
+  Yonge-DundasSquare:
+    start: 2013-06-20 11:00
+    end: 2013-06-20 16:00
+    areas:
+      -  
+        lat: 43.655981
+        long: -79.38031
+        range: 0.2km
+  TorontoCityHall:
+    start: 2013-06-20 10:30
+    end: 2013-06-20 12:30
+    areas:
+      -  
+        lat: 43.653489
+        long: -79.384741
+        range: 0.2km
+
 # Toronto Pride March
-#  TorontoPride:
-#    startdate: '2013-06-21'
-#    enddate: '2013-06-30'
-#    area:
-#      -  
-#        lat: 43.669672
-#        long: -79.384957
-#        range: 0.3km
-#      -  
-#        lat: 43.667173
-#        long: -79.385086
-#        range: 0.2km
-#      -  
-#        lat: 43.66618
-#        long: -79.383498
-#        range: 0.3km
+  TorontoPride:
+    start: 2013-06-30 13:00
+    end: 2013-06-30 23:00
+    areas:
+      -  
+        lat: 43.669672
+        long: -79.384957
+        range: 0.3km
+      -  
+        lat: 43.667173
+        long: -79.385086
+        range: 0.2km
+      -  
+        lat: 43.66618
+        long: -79.383498
+        range: 0.3km
 
 IgnoredWords:
 # Note: Ignored words should be in lower case

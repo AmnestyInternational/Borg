@@ -7,6 +7,7 @@ require 'time'
 require 'iconv'
 require 'logger'
 require 'twitter'
+require 'active_support/all'
 
 def log_time(input)
   puts Time.now.to_s + ", " + input
@@ -19,9 +20,10 @@ def setvars
   @returns_per_page = @yml['Settings']['returns_per_page']
   $ignoredwords = @yml['IgnoredWords']
   dbyml = YAML::load(File.open('config/db_settings.yml'))['prod_settings']
-  @client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
+  @client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'], :timeout => 30000)
   log_time ("connected to #{dbyml['database']} on #{dbyml['host']}")
   @sql_insert_batch_size = 100
+  @defaulttimezone = @yml['Settings']['default_timezone']
 
   tokens = YAML::load(File.open('config/api_tokens.yml'))['api_tokens']['twitter']
   Twitter.configure do |config|
@@ -31,6 +33,13 @@ def setvars
     config.oauth_token_secret = tokens['oauth_token_secret']
   end
 
+end
+
+class Hash
+  def is_current?
+    Time.zone = self['timezone']
+    Time.zone.parse(self['start'].to_s) <= Time.now && Time.zone.parse(self['end'].to_s) >= Time.now
+  end
 end
 
 class String
@@ -300,14 +309,8 @@ def insert_tweets(tweets)
 
 end
 
-def fetch_tweet_data(region, search_term = '')
-
-  regionname = region[0]
-  lat = region[1]['area'][0]['lat']
-  long = region[1]['area'][0]['long']
-  range = region[1]['area'][0]['range']
-
-  if search_term == ''
+def get_since_id(regionname, search_term = nil)
+  if search_term == nil
     result = @client.execute("
       SELECT MAX(id) 'max_id'
       FROM vAI_Tweets
@@ -327,55 +330,85 @@ def fetch_tweet_data(region, search_term = '')
   end
 
   toprow = result.first
-  since_id = toprow.nil? ? 0 : toprow['max_id'].to_i
+  toprow.nil? ? 0 : toprow['max_id'].to_i
+end
 
-  log_time("since_id = #{since_id}")
+def fetch_tweets_from_area(regionname, area, since_id, search_term = '')
 
-  log_time("query using: #{search_term}, :geocode => #{lat},#{long},#{range}, :count => #{@returns_per_page}, :result_type => #{@result_type}, :since_id => #{since_id}")
+  lat = area['lat']
+  long = area['long']
+  range = area['range']
 
-  rawtweetdata = Twitter.search(search_term, :geocode => "#{lat},#{long},#{range}", :count => @returns_per_page, :result_type => @result_type, :since_id => since_id).results
+  parameters = { :geocode => "#{lat},#{long},#{range}", :count => @returns_per_page, :result_type => @result_type, :since_id => since_id }
 
-  log_time("returned tweets: " + rawtweetdata.length.to_s)
-  
-  tweetdata = Hash.new{|hash, key| hash[key] = Array.new}
+  log_time("query using: search term '#{search_term}' and parameters '#{parameters.to_s}'")
+
+  rawtweetdata = Twitter.search( search_term, parameters ).results
+
+  log_time("returned tweets: #{rawtweetdata.length}")
+
+  return organise_raw_tweet_data(rawtweetdata, regionname)
+
+end
+
+def organise_raw_tweet_data(rawtweetdata, regionname = nil)
+
+  log_time("Organising #{rawtweetdata.length} tweets")
+
+  organiseddata = Hash.new{|hash, key| hash[key] = Array.new}
+
+  organiseddata['max_id'] = organiseddata['since_id'] = 0
 
   if rawtweetdata
     rawtweetdata.map! do | rawtweet |
 
+      organiseddata['max_id'] = ( rawtweet.id - 1 ) if (rawtweet.id <= organiseddata['max_id'] || organiseddata['max_id'] == 0)
+      organiseddata['since_id'] = ( rawtweet.id  + 1 ) if rawtweet.id >= organiseddata['since_id']
+
       # Tweets
       coordinates = rawtweet.geo.nil? ? [] : rawtweet.geo.coordinates
 
-      tweetdata['tweets'] << {
+      organiseddata['tweets'] << {
         :id => rawtweet.id,
         :usr_id => rawtweet.user.id,
         :coordinates => coordinates,
-        :text => rawtweet.text.to_s,
+        :text => rawtweet.text,
+        :source => rawtweet.source,
+        :truncated => rawtweet.truncated,
+        :in_reply_to_status_id => rawtweet.in_reply_to_status_id,
+        :in_reply_to_user_id => rawtweet.in_reply_to_user_id,
+        :retweet_count => rawtweet.retweet_count,
+        :favorite_count => rawtweet.favorite_count,
+        :place => rawtweet.place,
+        :lang => rawtweet.lang,
         :created => Time.parse(rawtweet.created_at.to_s).to_s }
         
       # Twitterusers
       utc_offset = rawtweet.user.utc_offset.nil? ? nil : (rawtweet.user.utc_offset / (60 * 60) ).to_s
       created_at = rawtweet.user.created_at.nil? ? nil : Time.parse(rawtweet.user.created_at.to_s).to_s
 
-      tweetdata['twitterusers'] << {
+      organiseddata['twitterusers'] << {
         :id => rawtweet.user.id,
-        :screen_name => rawtweet.user.screen_name.to_s,
-        :name => rawtweet.user.name.to_s,
-        :location => rawtweet.user.location.to_s,
+        :screen_name => rawtweet.user.screen_name,
+        :name => rawtweet.user.name,
+        :location => rawtweet.user.location,
+        :description => rawtweet.user.description,
         :protected => rawtweet.user.protected.to_s,
         :verified => rawtweet.user.verified.to_s,
-        :followers_count => rawtweet.user.followers_count.to_s,
-        :friends_count => rawtweet.user.friends_count.to_s,
-        :statuses_count => rawtweet.user.statuses_count.to_s,
-        :time_zone => rawtweet.user.time_zone.to_s,
+        :followers_count => rawtweet.user.followers_count,
+        :friends_count => rawtweet.user.friends_count,
+        :statuses_count => rawtweet.user.statuses_count,
+        :favourites_count => rawtweet.user.favourites_count,
+        :time_zone => rawtweet.user.time_zone,
         :utc_offset => utc_offset,
-        :profile_image_url => rawtweet.user.profile_image_url_https.to_s,
+        :profile_image_url => rawtweet.user.profile_image_url_https,
         :created_at => created_at }
         
       # Tweetsanatomize
       terms = rawtweet.text.to_s.anatomize
       terms.each do | term |
         term = term[0,32]
-        tweetdata['tweetsanatomize'] << {
+        organiseddata['tweetsanatomize'] << {
           :tweet_id => rawtweet.id,
           :term => term }
       end
@@ -383,7 +416,7 @@ def fetch_tweet_data(region, search_term = '')
       # Tweetusermentions
       if rawtweet.user_mentions
         rawtweet.user_mentions.map! do | mention |
-          tweetdata['tweetusermentions'] << {
+          organiseddata['tweetusermentions'] << {
             :tweet_id => rawtweet.id,
             :usr_id => mention.id }
         end
@@ -392,7 +425,7 @@ def fetch_tweet_data(region, search_term = '')
       # Tweethashtags
       if rawtweet.hashtags
         rawtweet.hashtags.map! do | hashtag |
-          tweetdata['tweethashtags'] << {
+          organiseddata['tweethashtags'] << {
             :tweet_id => rawtweet.id,
             :hashtag => hashtag.text[0,32] }
         end
@@ -401,25 +434,30 @@ def fetch_tweet_data(region, search_term = '')
       # Tweeturls
       if rawtweet.urls
         rawtweet.urls.map! do | url |
-          tweetdata['tweeturls'] << {
+          organiseddata['tweeturls'] << {
             :tweet_id => rawtweet.id,
             :url => url.expanded_url[0,256] }
         end
       end
-        
+      
       # Tweetregions
-      tweetdata['tweetregions'] << {
-        :tweet_id => rawtweet.id,
-        :region => regionname[0,32] }
-
+      if regionname
+        organiseddata['tweetregions'] << {
+          :tweet_id => rawtweet.id,
+          :region => regionname[0,32] }
+      end
     end
   end
 
-  return tweetdata
+  organiseddata['twitterusers'] = organiseddata['twitterusers'].uniq { |h| h[:id] }
+
+  log_time("#{rawtweetdata.length} tweets organised into #{organiseddata['tweets'].length} tweets, #{organiseddata['twitterusers'].length} users, #{organiseddata['tweetsanatomize'].length} words, #{organiseddata['tweetusermentions'].length} user mentions, #{organiseddata['tweethashtags'].length} hashtags, #{organiseddata['tweeturls'].length} urls, #{organiseddata['tweetregions'].length} region connections.")
+
+  return organiseddata
 end
 
-def lookuptwitterusersid(screen_name)
-  log_time("Looking up id of #{screen_name}")
+def lookup_twitter_user(screen_name)
+  log_time("Looking up #{screen_name} in TwitterUsers Table")
   result = @client.execute("
     SELECT id
     FROM TwitterUsers
@@ -428,13 +466,13 @@ def lookuptwitterusersid(screen_name)
   toprow = result.first
   if toprow.nil?
     log_time("#{screen_name} not in TwitterUsers Table, querring Twitter.user")
-    userdata = Hash.new{|hash, key| hash[key] = Array.new}
+    user = Array.new
     rawuserdata = Twitter.user(screen_name)
 
     utc_offset = rawuserdata.utc_offset.nil? ? nil : (rawuserdata.utc_offset / (60 * 60) ).to_s
     created_at = rawuserdata.created_at.nil? ? nil : Time.parse(rawuserdata.created_at.to_s).to_s
 
-    userdata['twitterusers'] << {
+    user << {
       :id => rawuserdata.id,
       :screen_name => rawuserdata.screen_name.to_s,
       :name => rawuserdata.name.to_s,
@@ -449,29 +487,39 @@ def lookuptwitterusersid(screen_name)
       :profile_image_url => rawuserdata.profile_image_url_https.to_s,
       :created_at => created_at }
 
-    insert_twitter_users(userdata['twitterusers']) if userdata['twitterusers'].length > 0
+    insert_twitter_users(user) if user.length > 0
     usr_id = rawuserdata.id.to_s
   else
-    log_time("#{screen_name} already in TwitterUsers table")
+    log_time("#{screen_name} exists in TwitterUsers table")
     usr_id = toprow['id'].to_s
   end
   log_time("user id = #{usr_id.to_s}")
-  return usr_id
+
+  userdata = Hash.new
+  log_time("Looking up #{screen_name} in TwitterUsers Table")
+  result = @client.execute("
+    SELECT *
+    FROM TwitterUsers
+    WHERE id = '#{usr_id}'")
+
+  userdata = result.first
+
+  return userdata
 end
 
-def savedata(inputdata, filename)
+def save_data(inputdata, filename)
   open("tmp/#{filename}.yml", 'w') {|f| YAML.dump(inputdata, f)}
   loaded = open("tmp/#{filename}.yml") {|f| YAML.load(f) }
   log_time("tmp/#{filename}.yml created with #{inputdata['tweetfollowerids'].length.to_s} records")
 end
 
-def loadrawdata(filename)
+def load_data(filename)
   file = YAML::load(File.open("tmp/#{filename}.yml"))
   log_time("#{file['tweetfollowerids'].length.to_s} records loaded from tmp/#{filename}.yml")
   return file
 end
 
-def fetchfollowerids(usr_id, cursor = -1)
+def fetch_follower_ids(usr_id, cursor = -1)
   log_time("fetching follower_ids of usr_id #{usr_id.to_i} with cursor #{cursor.to_i}")
 
   rawfollowersdata = Twitter.follower_ids(usr_id.to_i, { :cursor => cursor.to_i })
