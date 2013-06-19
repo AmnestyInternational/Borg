@@ -38,16 +38,19 @@ def pullgooglenews
   newsarticles = Array.new
   newsarticles = XmlSimple.xml_in(response.body.force_encoding("ISO-8859-1").encode("UTF-8"), { 'KeyAttr' => 'name' })['channel'][0]['item']
   
-  log_time("#{newsarticles.length.to_s} articles retrieved from Google News")
+  itemcount = newsarticles.nil? ? 0 : newsarticles.length
+  log_time("#{itemcount} articles retrieved from Google News")
 
-  newsarticles.each do | article |
-    @articles << {
-      'url' => article['link'][0].split(/&url=/)[-1],
-      'title' => article['title'][0].split(/\s-\s+/)[0],
-      'source' => article['title'][0].split(/\s-\s+/)[-1],
-      'type' => 'news',
-      'description' => article['description'][0].strip_tags,
-      'published' => article['pubDate'][0].to_datetime}
+  if itemcount > 0
+    newsarticles.each do | article |
+      @articles << {
+        'url' => article['link'][0].split(/&url=/)[-1],
+        'title' => article['title'][0].split(/\s-\s+/)[0],
+        'source' => article['title'][0].split(/\s-\s+/)[-1],
+        'type' => 'news',
+        'description' => article['description'][0].strip_tags,
+        'published' => article['pubDate'][0].to_datetime}
+    end
   end
 # https://news.google.ca/news/feeds?q=%22amnesty+international%22&hgl=ca&pz=1&cf=all&ned=ca&hl=en&output=rss
 end
@@ -59,16 +62,19 @@ def pullicerocket
   blogs = Array.new
   blogs = XmlSimple.xml_in(response.body, { 'KeyAttr' => 'name' })['channel'][0]['item']
 
-  log_time("#{blogs.length.to_s} articles retrieved from Ice Rocket")
+  itemcount = blogs.nil? ? 0 : blogs.length
+  log_time("#{itemcount} articles retrieved from Ice Rocket")
 
-  blogs.each do | post |
-    @articles << {
-      'url' => post['link'][0],
-      'title' =>  post['title'][0],
-      'source' => post['source'][0]['content'],
-      'type' => 'blog',
-      'description' => post['description'][0].strip_tags,
-      'published' => post['pubDate'][0].to_datetime}
+  if itemcount > 0
+    blogs.each do | post |
+      @articles << {
+        'url' => post['link'][0],
+        'title' =>  post['title'][0],
+        'source' => post['source'][0]['content'],
+        'type' => 'blog',
+        'description' => post['description'][0].strip_tags,
+        'published' => post['pubDate'][0].to_datetime}
+    end
   end
 # http://www.icerocket.com/search?tab=blog&q=%22amnesty+international%22+canada&rss=1&dr=1
 end
@@ -80,16 +86,19 @@ def pullgoogleblog
   blogs = Array.new
   blogs = XmlSimple.xml_in(response.body.force_encoding("ISO-8859-1").encode("UTF-8"), { 'KeyAttr' => 'name' })['channel'][0]['item']
 
-  log_time("#{blogs.length.to_s} articles retrieved from Google Blogs")
+  itemcount = blogs.nil? ? 0 : blogs.length
+  log_time("#{itemcount} articles retrieved from Google Blogs")
 
-  blogs.each do | post |
-    @articles << {
-      'url' => post['link'][0].split(/&url=/)[-1],
-      'title' => post['title'][0],
-      'source' => post['publisher'][0],
-      'type' => 'blog',
-      'description' => post['description'][0].strip_tags,
-      'published' => post['date'][0].to_datetime}
+  if itemcount > 0
+    blogs.each do | post |
+      @articles << {
+        'url' => post['link'][0].split(/&url=/)[-1],
+        'title' => post['title'][0],
+        'source' => post['publisher'][0],
+        'type' => 'blog',
+        'description' => post['description'][0].strip_tags,
+        'published' => post['date'][0].to_datetime}
+    end
   end
 # http://www.google.ca/search?hl=en-CA&q=%22amnesty+international%22&tbm=blg&output=rss&hl=en-CA&cr=countryCA&biw=1440&bih=766&tbs=ctr:countryCA,qdr:d&source=hp
 end
@@ -98,7 +107,7 @@ def importarticles
   dbyml = YAML::load(File.open('config/db_settings.yml'))['prod_settings']
   client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'])
   log_time("connection to #{dbyml['database']} on #{dbyml['host']} opened, inserting / updating records")
-  log_time("inserting / updating #{@articles.length.to_s} articles")
+  log_time("inserting / updating #{@articles.length} articles")
 
   insertcount = Hash.new {|hash,key| hash[key] = 0 }
   @articles.each do | article |
@@ -119,7 +128,7 @@ def importarticles
             '#{article['published'].to_s(:db)}');\n"
 
     insertcount['article'] += 1
-    puts sql
+
     client.execute(sql).do
   end
 
