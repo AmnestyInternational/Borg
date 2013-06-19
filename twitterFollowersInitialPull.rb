@@ -25,7 +25,7 @@ users.each do | user |
   log_time("fetching #{user} with #{usr_id}")
 
   followersdata = fetch_follower_ids(usr_id)
-  savedata(followersdata, user)
+  save_data(followersdata, user)
   #followersdata = loaddata(user)
   #insert_twitter_user_followers(followersdata['tweetfollowerids']) if followersdata['tweetfollowerids'].length > 0
 
