@@ -7,12 +7,14 @@ require 'tiny_tds'
 require 'iconv'
 require 'active_support/all'
 require 'time'
-require 'net/https'
-require 'nokogiri'
+
+$LOG = Logger.new('log/e-activist.log')
+# Set back to default formatter because active_support/all is messing things up
+$LOG.formatter = Logger::Formatter.new 
 
 def log_time(input)
-  puts Time.now.to_s + ", " + input
-  @LOG.info(input)
+  puts "#{Time.now.to_s} - #{input}"
+  $LOG.info(input)
 end
 
 class String
@@ -43,20 +45,18 @@ def pullrawdata(days)
   token = YAML::load(File.open('config/api_tokens.yml'))['api_tokens']['engagingnetworkstoken']
   startdate = (Time.now - (days * 24 * 60 * 60)).strftime("%m%d%Y")
 
-  log_time("Requesting " + days.to_s + " day(s) of records with : https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml")
+  log_time("Requesting #{days.to_s} day(s) of records with : https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml")
 
   uri = URI.parse("https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml")
   http = Net::HTTP.new(uri.host, uri.port)
-  http.read_timeout = 14400 # the pulling process needs a huge timeout, this is 4 hours in seconds
+  http.read_timeout = 480 * 60 # the pulling process needs a huge timeout
   http.use_ssl = true
   http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-  http.ssl_version = :TLSv1
   response = http.get(uri.request_uri)
-  raweactivismxml = Nokogiri::XML(response.body.force_encoding("ISO-8859-1").encode("UTF-8"))
-  raweactivism = XmlSimple.xml_in(raweactivismxml.to_xml)['rows'][0]['row']
+  raweactivism = XmlSimple.xml_in(response.body.force_encoding("ISO-8859-1").encode("UTF-8"), { 'KeyAttr' => 'name' })['rows'][0]['row']
 
   log_time(raweactivism.length.to_s + " records imported...")
-  return raweactivism
+  raweactivism
 end
 
 def savedata(inputdata, filename)
@@ -65,13 +65,13 @@ def savedata(inputdata, filename)
   log_time("tmp/#{filename}.yml created with #{inputdata.length.to_s} records")
 end
 
-def loaddata(filename)
-  data = YAML::load(File.open("tmp/#{filename}.yml"))
-  log_time(data.length.to_s + " records loaded from tmp/#{filename}.yml")
-  data
+def loadrawdata
+  raweactivism = YAML::load(File.open('tmp/raweactivism.yml'))
+  log_time("#{raweactivism.length.to_s} records loaded from tmp/raweactivism.yml")
+  raweactivism
 end
 
-def organiseactivismdata(raweactivism)
+def organise(raweactivism)
   eactivist = Hash.new {|hash,key| hash[key] = Hash.new {|hash,key| hash[key] = [] } }
 
   structure = YAML::load(File.open('config/engagingnetworks.yml'))['structure']
@@ -179,6 +179,7 @@ def importeactivists(eactivists)
       end
 
     data['activities'].each do | activity |
+
       sql << "
           IF EXISTS (
             SELECT seqn

@@ -493,10 +493,9 @@ def lookup_twitter_user(screen_name)
     log_time("#{screen_name} exists in TwitterUsers table")
     usr_id = toprow['id'].to_s
   end
-  log_time("user id = #{usr_id.to_s}")
 
   userdata = Hash.new
-  log_time("Looking up #{screen_name} in TwitterUsers Table")
+#  log_time("Looking up #{screen_name} in TwitterUsers Table")
   result = @client.execute("
     SELECT *
     FROM TwitterUsers
@@ -543,5 +542,17 @@ def fetch_follower_ids(usr_id, cursor = -1)
   return tweetdata
 end
 
+def fetch_user_timeline(user, since_id = nil, max_id = nil)
+
+  parameters = Hash.new
+  parameters[:count] = 200
+  parameters[:max_id] = max_id unless max_id.nil?
+  parameters[:since_id] = since_id unless  since_id.nil?
+
+  log_time("Polling Twitter API for tweets by #{user} using parameters: #{parameters.to_s}")
+
+  organise_raw_tweet_data(Twitter.user_timeline(user, parameters))
+
+end
 
 
