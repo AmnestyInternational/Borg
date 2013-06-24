@@ -7,15 +7,15 @@ log_time("Start time")
 
 def pull_tweets
 
-  querycount = (@yml['SearchTerms'].length * @yml['Regions'].length)
-  runfreq = @yml['Settings']['run_freq']
+  querycount = (@yml['Search terms'].length * @yml['Regions'].length)
+  runfreq = @yml['Settings']['run freq']
   starttime = Time.now
   secbetweenfetches = ( runfreq * 60 * 60 ) / querycount
   fetchcount = 0
 
   log_time("#{querycount} queries in #{runfreq} hours equals one fetch every #{secbetweenfetches} seconds")
 
-  @yml['SearchTerms'].each do | search_term |
+  @yml['Search terms'].each do | search_term |
 
     @yml['Regions'].each do | region |
 

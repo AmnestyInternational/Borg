@@ -15,8 +15,8 @@ log_time("Start time")
 #user = 'Ceyda_duvenci' # 415103
 #user = 'ADEL_FELAIFIL'
 
-#users = ['RT_Erdogan']
-users = ['kaanmentes']
+users = ['RT_Erdogan']
+#users = ['kaanmentes']
 
 setvars
 

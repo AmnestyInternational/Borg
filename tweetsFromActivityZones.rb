@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require_relative 'lib/twitterAPIengine'
 
-$LOG = Logger.new('log/twitterActivityZones.log')
+$LOG = Logger.new('log/twitter_activity_zones.log')
 # Set back to default formatter because active_support/all is messing things up
 $LOG.formatter = Logger::Formatter.new  
 
@@ -9,23 +9,23 @@ log_time("Start time")
 
 def pull_tweets
 
-  @yml['ActivityZone'].each do | activityzone |
-    activityzonename = activityzone[0]
-    activityzonedetails = activityzone[1]
-    activityzonedetails['timezone'] = @defaulttimezone unless activityzonedetails['timezone']
+  @yml['Activity zone'].each do | activity_zone |
+    activity_zonename = activity_zone[0]
+    activity_zone_details = activity_zone[1]
+    activity_zone_details['timezone'] = @default_timezone unless activity_zone_details['timezone']
 
-    log_time("Activity Zone: #{activityzonename}")
-    log_time("Start = #{activityzonedetails['start']}, end = #{activityzonedetails['end']}, timezone = #{activityzonedetails['timezone']}")
-    log_time("Current? #{activityzonedetails.is_current?.to_s}")
+    log_time("Activity Zone: #{activity_zonename}")
+    log_time("Start = #{activity_zone_details['start']}, end = #{activity_zone_details['end']}, timezone = #{activity_zone_details['timezone']}")
+    log_time("Current? #{activity_zone_details.is_current?.to_s}")
 
-    if activityzonedetails.is_current?
+    if activity_zone_details.is_current?
 
-      since_id = get_since_id(activityzonename)
+      since_id = get_since_id(activity_zonename)
       log_time("Since id: #{since_id}")
       
-      activityzonedetails['areas'].each do | area |
+      activity_zone_details['areas'].each do | area |
 
-        tweetdata = fetch_tweets_from_area(activityzonename, area, since_id)
+        tweetdata = fetch_tweets_from_area(activity_zonename, area, since_id)
 
         insert_tweets(tweetdata['tweets']) if tweetdata['tweets'].length > 0
         sleep 1

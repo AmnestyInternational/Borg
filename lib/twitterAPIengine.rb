@@ -16,14 +16,14 @@ end
 
 def setvars
   @yml = YAML::load(File.open('config/twitter.yml'))
-  @result_type = @yml['Settings']['result_type']
-  @returns_per_page = @yml['Settings']['returns_per_page']
-  $ignoredwords = @yml['IgnoredWords']
+  @result_type = @yml['Settings']['result type']
+  @returns_per_page = @yml['Settings']['returns per page']
+  $ignoredwords = @yml['Ignored words']
   dbyml = YAML::load(File.open('config/db_settings.yml'))['prod_settings']
   @client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'], :timeout => 30000)
   log_time ("connected to #{dbyml['database']} on #{dbyml['host']}")
   @sql_insert_batch_size = 100
-  @defaulttimezone = @yml['Settings']['default_timezone']
+  @default_timezone = @yml['Settings']['default timezone']
 
   tokens = YAML::load(File.open('config/api_tokens.yml'))['api_tokens']['twitter']
   Twitter.configure do |config|
@@ -177,15 +177,15 @@ def insert_tweet_regions(regions)
   sql = String.new
 
   regions.each do | region |
-    regionclean = region[:region].to_s.to_esc_sql
+    region_name = region[:region].to_s.to_esc_sql
     sql << "
-      IF EXISTS (SELECT tweet_id FROM TweetRegions WHERE tweet_id = '#{region[:tweet_id]}' AND region = '#{regionclean}')
+      IF EXISTS (SELECT tweet_id FROM TweetRegions WHERE tweet_id = '#{region[:tweet_id]}' AND region = '#{region_name}')
         SELECT 'Do nothing' ;
       ELSE
         INSERT TweetRegions (tweet_id, region)
         VALUES (
           '#{region[:tweet_id]}',
-          '#{regionclean}');\n"
+          '#{region_name}');\n"
   end
 
   @client.execute(sql).do
@@ -263,15 +263,15 @@ def insert_tweets_anatomized(terms)
   sql = String.new
 
   terms.each do | term |
-    termclean = term[:term].to_s.to_esc_sql
+    cleaned_term = term[:term].to_s.to_esc_sql
     sql << "
-      IF EXISTS (SELECT tweet_id FROM tweetsanatomize WHERE tweet_id = '#{term[:tweet_id]}' AND term = '#{termclean}')
+      IF EXISTS (SELECT tweet_id FROM tweetsanatomize WHERE tweet_id = '#{term[:tweet_id]}' AND term = '#{cleaned_term}')
         SELECT 'Do nothing' ;
       ELSE
         INSERT tweetsanatomize (tweet_id, term)
         VALUES (
           '#{term[:tweet_id]}',
-          '#{termclean}');\n"
+          '#{cleaned_term}');\n"
   end
 
   @client.execute(sql).do
@@ -309,12 +309,12 @@ def insert_tweets(tweets)
 
 end
 
-def get_since_id(regionname, search_term = nil)
+def get_since_id(region_name, search_term = nil)
   if search_term == nil
     result = @client.execute("
       SELECT MAX(id) 'max_id'
       FROM vAI_Tweets
-      WHERE region = '#{regionname}'")
+      WHERE region = '#{region_name}'")
   else
     result = @client.execute("
       SELECT TOP 1 id 'max_id'
@@ -324,16 +324,16 @@ def get_since_id(regionname, search_term = nil)
         TweetRegions AS TR
         ON T.id = TR.tweet_id
       WHERE
-        TR.region = '#{regionname}' AND
+        TR.region = '#{region_name}' AND
         imported < DATEADD(HOUR, -12, GETDATE())
       ORDER BY imported DESC")
   end
 
-  toprow = result.first
-  toprow.nil? ? 0 : toprow['max_id'].to_i
+  top_row = result.first
+  top_row.nil? ? 0 : top_row['max_id'].to_i
 end
 
-def fetch_tweets_from_area(regionname, area, since_id, search_term = '')
+def fetch_tweets_from_area(region_name, area, since_id, search_term = '')
 
   lat = area['lat']
   long = area['long']
@@ -343,117 +343,117 @@ def fetch_tweets_from_area(regionname, area, since_id, search_term = '')
 
   log_time("query using: search term '#{search_term}' and parameters '#{parameters.to_s}'")
 
-  rawtweetdata = Twitter.search( search_term, parameters ).results
+  raw_tweet_data = Twitter.search( search_term, parameters ).results
 
-  log_time("returned tweets: #{rawtweetdata.length}")
+  log_time("returned tweets: #{raw_tweet_data.length}")
 
-  return organise_raw_tweet_data(rawtweetdata, regionname)
+  return organise_raw_tweet_data(raw_tweet_data, region_name)
 
 end
 
-def organise_raw_tweet_data(rawtweetdata, regionname = nil)
+def organise_raw_tweet_data(raw_tweet_data, region_name = nil)
 
-  log_time("Organising #{rawtweetdata.length} tweets")
+  log_time("Organising #{raw_tweet_data.length} tweets")
 
-  organiseddata = Hash.new{|hash, key| hash[key] = Array.new}
+  organised_data = Hash.new{|hash, key| hash[key] = Array.new}
 
-  organiseddata['max_id'] = organiseddata['since_id'] = 0
+  organised_data['max_id'] = organised_data['since_id'] = 0
 
-  if rawtweetdata
-    rawtweetdata.map! do | rawtweet |
+  if raw_tweet_data
+    raw_tweet_data.map! do | raw_tweet |
 
-      organiseddata['max_id'] = ( rawtweet.id - 1 ) if (rawtweet.id <= organiseddata['max_id'] || organiseddata['max_id'] == 0)
-      organiseddata['since_id'] = ( rawtweet.id  + 1 ) if rawtweet.id >= organiseddata['since_id']
+      organised_data['max_id'] = ( raw_tweet.id - 1 ) if (raw_tweet.id <= organised_data['max_id'] || organised_data['max_id'] == 0)
+      organised_data['since_id'] = ( raw_tweet.id  + 1 ) if raw_tweet.id >= organised_data['since_id']
 
       # Tweets
-      coordinates = rawtweet.geo.nil? ? [] : rawtweet.geo.coordinates
+      coordinates = raw_tweet.geo.nil? ? [] : raw_tweet.geo.coordinates
 
-      organiseddata['tweets'] << {
-        :id => rawtweet.id,
-        :usr_id => rawtweet.user.id,
+      organised_data['tweets'] << {
+        :id => raw_tweet.id,
+        :usr_id => raw_tweet.user.id,
         :coordinates => coordinates,
-        :text => rawtweet.text,
-        :source => rawtweet.source,
-        :truncated => rawtweet.truncated,
-        :in_reply_to_status_id => rawtweet.in_reply_to_status_id,
-        :in_reply_to_user_id => rawtweet.in_reply_to_user_id,
-        :retweet_count => rawtweet.retweet_count,
-        :favorite_count => rawtweet.favorite_count,
-        :place => rawtweet.place,
-        :lang => rawtweet.lang,
-        :created => Time.parse(rawtweet.created_at.to_s).to_s }
+        :text => raw_tweet.text,
+        :source => raw_tweet.source,
+        :truncated => raw_tweet.truncated,
+        :in_reply_to_status_id => raw_tweet.in_reply_to_status_id,
+        :in_reply_to_user_id => raw_tweet.in_reply_to_user_id,
+        :retweet_count => raw_tweet.retweet_count,
+        :favorite_count => raw_tweet.favorite_count,
+        :place => raw_tweet.place,
+        :lang => raw_tweet.lang,
+        :created => Time.parse(raw_tweet.created_at.to_s).to_s }
         
       # Twitterusers
-      utc_offset = rawtweet.user.utc_offset.nil? ? nil : (rawtweet.user.utc_offset / (60 * 60) ).to_s
-      created_at = rawtweet.user.created_at.nil? ? nil : Time.parse(rawtweet.user.created_at.to_s).to_s
+      utc_offset = raw_tweet.user.utc_offset.nil? ? nil : (raw_tweet.user.utc_offset / (60 * 60) ).to_s
+      created_at = raw_tweet.user.created_at.nil? ? nil : Time.parse(raw_tweet.user.created_at.to_s).to_s
 
-      organiseddata['twitterusers'] << {
-        :id => rawtweet.user.id,
-        :screen_name => rawtweet.user.screen_name,
-        :name => rawtweet.user.name,
-        :location => rawtweet.user.location,
-        :description => rawtweet.user.description,
-        :protected => rawtweet.user.protected.to_s,
-        :verified => rawtweet.user.verified.to_s,
-        :followers_count => rawtweet.user.followers_count,
-        :friends_count => rawtweet.user.friends_count,
-        :statuses_count => rawtweet.user.statuses_count,
-        :favourites_count => rawtweet.user.favourites_count,
-        :time_zone => rawtweet.user.time_zone,
+      organised_data['twitterusers'] << {
+        :id => raw_tweet.user.id,
+        :screen_name => raw_tweet.user.screen_name,
+        :name => raw_tweet.user.name,
+        :location => raw_tweet.user.location,
+        :description => raw_tweet.user.description,
+        :protected => raw_tweet.user.protected.to_s,
+        :verified => raw_tweet.user.verified.to_s,
+        :followers_count => raw_tweet.user.followers_count,
+        :friends_count => raw_tweet.user.friends_count,
+        :statuses_count => raw_tweet.user.statuses_count,
+        :favourites_count => raw_tweet.user.favourites_count,
+        :time_zone => raw_tweet.user.time_zone,
         :utc_offset => utc_offset,
-        :profile_image_url => rawtweet.user.profile_image_url_https,
+        :profile_image_url => raw_tweet.user.profile_image_url_https,
         :created_at => created_at }
         
       # Tweetsanatomize
-      terms = rawtweet.text.to_s.anatomize
+      terms = raw_tweet.text.to_s.anatomize
       terms.each do | term |
         term = term[0,32]
-        organiseddata['tweetsanatomize'] << {
-          :tweet_id => rawtweet.id,
+        organised_data['tweetsanatomize'] << {
+          :tweet_id => raw_tweet.id,
           :term => term }
       end
 
       # Tweetusermentions
-      if rawtweet.user_mentions
-        rawtweet.user_mentions.map! do | mention |
-          organiseddata['tweetusermentions'] << {
-            :tweet_id => rawtweet.id,
+      if raw_tweet.user_mentions
+        raw_tweet.user_mentions.map! do | mention |
+          organised_data['tweetusermentions'] << {
+            :tweet_id => raw_tweet.id,
             :usr_id => mention.id }
         end
       end
 
       # Tweethashtags
-      if rawtweet.hashtags
-        rawtweet.hashtags.map! do | hashtag |
-          organiseddata['tweethashtags'] << {
-            :tweet_id => rawtweet.id,
+      if raw_tweet.hashtags
+        raw_tweet.hashtags.map! do | hashtag |
+          organised_data['tweethashtags'] << {
+            :tweet_id => raw_tweet.id,
             :hashtag => hashtag.text[0,32] }
         end
       end
         
       # Tweeturls
-      if rawtweet.urls
-        rawtweet.urls.map! do | url |
-          organiseddata['tweeturls'] << {
-            :tweet_id => rawtweet.id,
+      if raw_tweet.urls
+        raw_tweet.urls.map! do | url |
+          organised_data['tweeturls'] << {
+            :tweet_id => raw_tweet.id,
             :url => url.expanded_url[0,256] }
         end
       end
       
       # Tweetregions
-      if regionname
-        organiseddata['tweetregions'] << {
-          :tweet_id => rawtweet.id,
-          :region => regionname[0,32] }
+      if region_name
+        organised_data['tweetregions'] << {
+          :tweet_id => raw_tweet.id,
+          :region => region_name[0,32] }
       end
     end
   end
 
-  organiseddata['twitterusers'] = organiseddata['twitterusers'].uniq { |h| h[:id] }
+  organised_data['twitterusers'] = organised_data['twitterusers'].uniq { |h| h[:id] }
 
-  log_time("#{rawtweetdata.length} tweets organised into #{organiseddata['tweets'].length} tweets, #{organiseddata['twitterusers'].length} users, #{organiseddata['tweetsanatomize'].length} words, #{organiseddata['tweetusermentions'].length} user mentions, #{organiseddata['tweethashtags'].length} hashtags, #{organiseddata['tweeturls'].length} urls, #{organiseddata['tweetregions'].length} region connections.")
+  log_time("#{raw_tweet_data.length} tweets organised into #{organised_data['tweets'].length} tweets, #{organised_data['twitterusers'].length} users, #{organised_data['tweetsanatomize'].length} words, #{organised_data['tweetusermentions'].length} user mentions, #{organised_data['tweethashtags'].length} hashtags, #{organised_data['tweeturls'].length} urls, #{organised_data['tweetregions'].length} region connections.")
 
-  return organiseddata
+  return organised_data
 end
 
 def lookup_twitter_user(screen_name)
@@ -495,7 +495,6 @@ def lookup_twitter_user(screen_name)
   end
 
   userdata = Hash.new
-#  log_time("Looking up #{screen_name} in TwitterUsers Table")
   result = @client.execute("
     SELECT *
     FROM TwitterUsers
@@ -528,7 +527,7 @@ def fetch_follower_ids(usr_id, cursor = -1)
   if rawfollowersdata
     rawfollowersdata.each do | rawfollowerid |
 
-      # Tweetregions
+      # Tweetfollowerids
       tweetdata['tweetfollowerids'] << {
         :usr_id => usr_id,
         :followers_usr_id => rawfollowerid }
