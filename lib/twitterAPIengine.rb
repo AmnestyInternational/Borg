@@ -18,7 +18,7 @@ def setvars
   @yml = YAML::load(File.open('config/twitter.yml'))
   @result_type = @yml['Settings']['result type']
   @returns_per_page = @yml['Settings']['returns per page']
-  $ignoredwords = @yml['Ignored words']
+  $ignored_words = @yml['Ignored words']
   dbyml = YAML::load(File.open('config/db_settings.yml'))['prod_settings']
   @client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'], :timeout => 30000)
   log_time ("connected to #{dbyml['database']} on #{dbyml['host']}")
@@ -56,7 +56,7 @@ class String
   end
 
   def anatomize
-    self.split(/\"|\.\"|[^a-z0-9]\'|\(|\)|\s+|[^a-z0-9]\s+|[^a-z0-9]\z+|\.\.+|$|^/imx).reject{ |s| $ignoredwords.include? s.downcase }.uniq
+    self.split(/\"|\.\"|[^a-z0-9]\'|\(|\)|\s+|[^a-z0-9]\s+|[^a-z0-9]\z+|\.\.+|$|^/imx).reject{ |s| $ignored_words.include? s.downcase }.uniq
   end
 end
 
