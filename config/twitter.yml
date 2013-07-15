@@ -43,7 +43,7 @@ Regions:
         long: -75.698
         range: 40km
   Edmonton:
-OB    areas:
+    areas:
       -  
         lat: 53.55
         long: -113.469
