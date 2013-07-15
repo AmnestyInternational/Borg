@@ -43,7 +43,7 @@ Regions:
         long: -75.698
         range: 40km
   Edmonton:
-    areas:
+OB    areas:
       -  
         lat: 53.55
         long: -113.469
@@ -271,7 +271,7 @@ Activity zone:
 # Turkey protests in Gezi
   Gezi:
     start: 2013-06-01
-    end: 2013-07-15
+    end: 2013-07-30
     timezone: Istanbul
     areas:
       -  
