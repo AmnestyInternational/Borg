@@ -7,7 +7,7 @@ Settings:
 # * recent: return only the most recent results in the response
 # * popular: return only the most popular results in the response.
   default timezone: Eastern Time (US & Canada)
-# There is a list of suitable timezones here http://api.rubyonrails.org/classes/ActiveSupport/TimeZone.html
+# List of suitable timezones => http://api.rubyonrails.org/classes/ActiveSupport/TimeZone.html
 
 Regions:
 # These are the largest 14 cities in Canada
@@ -321,6 +321,17 @@ Activity zone:
         lat: 43.66618
         long: -79.383498
         range: 0.3km
+
+# St John's Pride March
+  St Johns Pride:
+    start: 2013-07-20 12:30
+    end: 2013-07-20 15:30
+    timezone: Atlantic Time (Canada)
+    areas:
+      -
+        lat: 47.570866
+        long: -52.705858
+        range: 0.4km
 
 Ignored words:
 # Note: Ignored words should be in lower case
