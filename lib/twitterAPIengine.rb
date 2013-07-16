@@ -9,30 +9,75 @@ require 'logger'
 require 'twitter'
 require 'active_support/all'
 
-def log_time(input)
+def log_time(input, type = 'info')
   puts Time.now.to_s + ", " + input
-  $LOG.info(input)
+  type == 'error' ? $LOG.error(input) : $LOG.info(input)
+end
+
+def loadyaml(yaml)
+  log_time("loading #{yaml}")
+  begin
+    return YAML::load(File.open(yaml))
+  rescue Exception => e
+    log_time("error loading #{yaml} - #{e.message}", 'error')
+  end
 end
 
 def setvars
-  @yml = YAML::load(File.open('config/twitter.yml'))
-  @result_type = @yml['Settings']['result type']
-  @returns_per_page = @yml['Settings']['returns per page']
-  $ignored_words = @yml['Ignored words']
-  dbyml = YAML::load(File.open('config/db_settings.yml'))['prod_settings']
-  @client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'], :timeout => 30000)
-  log_time ("connected to #{dbyml['database']} on #{dbyml['host']}")
-  @sql_insert_batch_size = 100
-  @default_timezone = @yml['Settings']['default timezone']
+  log_time('setting variables')
 
-  tokens = YAML::load(File.open('config/api_tokens.yml'))['api_tokens']['twitter']
+  @sql_insert_batch_size = 100
+  @yml = loadyaml('config/twitter.yml')
+
+  begin
+    @result_type = @yml['Settings']['result type']
+  rescue Exception => e
+    @result_type = 'recent'
+    log_time("error loading result type! #{e.message}. Using #{@result_type} as result_type", 'error')
+  end
+
+  begin
+    @returns_per_page = @yml['Settings']['returns per page']
+  rescue Exception => e
+    @returns_per_page = 100
+    log_time("error loading returns per page! #{e.message}. Using #{@returns_per_page} as returns per page", 'error')
+  end
+
+  begin
+    @default_timezone = @yml['Settings']['default timezone']
+  rescue Exception => e
+    @default_timezone = 'Eastern Time (US & Canada)'
+    log_time("error loading default timezone! #{e.message}. using #{@default_timezone} as default timezone", 'error')
+  end
+
+  begin
+    $ignored_words = @yml['Ignored words']
+  rescue Exception => e
+    $ignored_words = []
+    log_time("error loading ignored words! #{e.message}. Using empty array as ignored words", 'error')
+  end
+
+  dbyml = loadyaml('config/db_settings.yml')['prod_settings']
+  log_time("error loading prod settings!", 'error') if dbyml == nil
+
+  begin
+    @client = TinyTds::Client.new(:username => dbyml['username'], :password => dbyml['password'], :host => dbyml['host'], :database => dbyml['database'], :timeout => 30000)
+  rescue Exception => e
+    log_time("error connecting to database! #{e.message}", 'error')
+    log_time("graceful exit\n\n")
+    exit
+  end
+  log_time("connected to #{dbyml['database']} on #{dbyml['host']}")
+
+  tokens = loadyaml('config/api_tokens.yml')['twitter']
+  log_time("error loading twitter api token!", 'error') if tokens == nil
+
   Twitter.configure do |config|
     config.consumer_key = tokens['consumer_key']
     config.consumer_secret = tokens['consumer_secret']
     config.oauth_token = tokens['oauth_token']
     config.oauth_token_secret = tokens['oauth_token_secret']
   end
-
 end
 
 class Hash

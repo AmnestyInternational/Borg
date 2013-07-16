@@ -1,9 +1,8 @@
-api_tokens: &api_tokens
-  fbaccesstoken: 
-  twitteraccesstoken: 
-  googleaccesstoken: 
-  googleapikey: 
-  googledashboardapikey: 
+fbaccesstoken: 
+twitteraccesstoken: 
+googleaccesstoken: 
+googleapikey: 
+googledashboardapikey: 
 
 # Facebook API details
 #

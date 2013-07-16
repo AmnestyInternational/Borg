@@ -42,7 +42,7 @@ class Hash
 end
 
 def pullrawdata(days)
-  token = YAML::load(File.open('config/api_tokens.yml'))['api_tokens']['engagingnetworkstoken']
+  token = YAML::load(File.open('config/api_tokens.yml'))['engagingnetworkstoken']
   startdate = (Time.now - (days * 24 * 60 * 60)).strftime("%m%d%Y")
 
   log_time("Requesting #{days.to_s} day(s) of records with : https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml")
