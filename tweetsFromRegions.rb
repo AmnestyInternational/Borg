@@ -1,7 +1,9 @@
 #!/usr/bin/env ruby
 require_relative 'lib/twitterAPIengine'
 
-$LOG = Logger.new('log/twitter.log')   
+$LOG = Logger.new('log/twitter_regions.log')
+# Set back to default formatter because active_support/all is messing things up
+$LOG.formatter = Logger::Formatter.new   
 
 log_time("Start time")
 
