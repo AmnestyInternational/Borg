@@ -13,10 +13,11 @@ log_time("Start time")
 #user = 'Joaquin_Pereira' # 51780
 #user = 'salmasaid' # 101209
 #user = 'Ceyda_duvenci' # 415103
-#user = 'ADEL_FELAIFIL'
+#user = 'ADEL_FELAIFIL' # 423000
+#user = 'RT_Erdogan' # 3189000
+#user = 'cbabdullahgul' # 3522000
 
 users = ['RT_Erdogan']
-#users = ['kaanmentes']
 
 setvars
 
