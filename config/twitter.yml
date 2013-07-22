@@ -1,6 +1,8 @@
 Settings:
   result type: recent
-  run freq: 2 # in hours
+  run freq: 4 # in hours
+  special events freq: 10 # minutes
+  activity zone freq: 10 # minutes
   returns per page: 100
 # result type example values;
 # * mixed: include both popular and real time results in the response.
@@ -121,9 +123,6 @@ Search terms:
   - '#deathpenalty'
   - '#amnestyartists'
   - 'Amnesty Artist'
-# Pussy riot duplicate
-  - 'pussy riot'
-  - 'pussyriot'
 # Women's Rights
   - '#iwfa'
   - '#mmiw'
@@ -156,11 +155,6 @@ Search terms:
 # Pussy Riot
   - 'pussy riot'
   - 'pussyriot'
-  - '@arcadefire'
-  - '@bryanadams'
-  - '@morissette'
-  - '@hidden_cameras'
-  - '@peachesnisker'
 # George Zimmerman trial
   - 'zimmerman'
 
@@ -287,6 +281,20 @@ Users:
 # Accused human rights violators
 # Bahrain
 #  - 'ADEL_FELAIFIL'
+
+Campaigns:
+  Pussy Riot:
+    start: 2013-07-22 07:00
+    end: 2013-07-24 19:00
+    Search terms:
+      - 'pussy riot'
+      - 'pussyriot'
+    Users:
+      - '@arcadefire'
+      - '@bryanadams'
+      - '@morissette'
+      - '@hidden_cameras'
+      - '@peachesnisker'
 
 Activity zone:
 # These are hotspots around the world, protests, rallies etc. A hotspot consists of an array circles
