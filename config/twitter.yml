@@ -290,11 +290,11 @@ Campaigns:
       - 'pussy riot'
       - 'pussyriot'
     Users:
-      - '@arcadefire'
-      - '@bryanadams'
-      - '@morissette'
-      - '@hidden_cameras'
-      - '@peachesnisker'
+      - 'arcadefire'
+      - 'bryanadams'
+      - 'morissette'
+      - 'hidden_cameras'
+      - 'peachesnisker'
 
 Activity zone:
 # These are hotspots around the world, protests, rallies etc. A hotspot consists of an array circles
