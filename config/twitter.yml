@@ -335,6 +335,25 @@ Activity zone:
         long: -79.384741
         range: 0.2km
 
+# Halifax Pride March
+  Halifax Pride:
+    start: 2013-07-27 13:00
+    end: 2013-07-27 23:00
+    timezone: Atlantic Time (Canada)
+    areas:
+      -  
+        lat: 44.65287
+        long: -63.57831
+        range: 0.3km
+      -  
+        lat: 44.645391
+        long: -63.575828
+        range: 0.5km
+      -  
+        lat: 44.647742
+        long: -63.582473
+        range: 0.3km
+
 # Toronto Pride March
   Toronto Pride:
     start: 2013-06-30 13:00
