@@ -599,4 +599,21 @@ def fetch_user_timeline(user, since_id = nil, max_id = nil)
 
 end
 
+def fetch_user_since_id(screen_name)
+  log_time("Looking up the max since_id for #{screen_name} from TwitterUsers Table")
+  result = @client.execute("
+    SELECT MAX(T.id) 'since_id'
+    FROM
+      Tweets AS T
+      INNER JOIN
+      TwitterUsers AS TU
+      ON T.usr_id = TU.id
+    WHERE
+      TU.screen_name = '#{screen_name.to_esc_sql}' AND
+      T.id NOT IN (SELECT tweet_id FROM TweetRegions)")
 
+  toprow = result.first
+  since_id = toprow.empty? ? nil : toprow['since_id'].to_i
+  log_time("Max since_id #{since_id}")
+  return since_id
+end

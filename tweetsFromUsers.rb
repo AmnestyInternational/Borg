@@ -12,18 +12,19 @@ def pull_tweets
   log_time("#{totalusers} users in Yaml file")
   count = 0
 
-  @yml['Users'].each do | user |
+  @yml['Users'].each do | screen_name |
     max_id = nil
     count += 1
-    user_details = lookup_twitter_user(user)
-    log_time("#{user} is #{count} of #{totalusers}")
-    log_time("#{user} has #{user_details['statuses_count']} tweets, collecting...")
+    user_details = lookup_twitter_user(screen_name)
+    since_id = fetch_user_since_id(screen_name)
+    log_time("#{screen_name} is #{count} of #{totalusers}")
+    log_time("#{screen_name} has #{user_details['statuses_count']} tweets, collecting...")
 
     tweetscount = 0
 
     loop do
 
-      tweetdata = fetch_user_timeline(user, nil, max_id)
+      tweetdata = fetch_user_timeline(screen_name, since_id, max_id)
       max_id = tweetdata['max_id']
 
       tweetscount += tweetdata['tweets'].length if tweetdata['tweets'].length > 0
@@ -46,7 +47,7 @@ def pull_tweets
       log_time("#{tweetscount} collected, sleeping for 60 seconds...")
       sleep 60
     end
-    log_time("#{tweetscount} collected for #{user}\n")
+    log_time("#{tweetscount} collected for #{screen_name}\n")
   end
 
 end

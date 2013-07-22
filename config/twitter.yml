@@ -166,11 +166,11 @@ Search terms:
 
 Users:
 # Pussy Riot Amnesty Artists
-  - '@arcadefire'
-  - '@bryanadams'
-  - '@morissette'
-  - '@hidden_cameras'
-  - '@peachesnisker'
+#  - 'arcadefire'
+#  - 'bryanadams'
+#  - 'morissette'
+#  - 'hidden_cameras'
+#  - 'peachesnisker'
   
 # Amnesty International Canada accounts
 #  - 'aicanadamedia'
@@ -214,11 +214,11 @@ Users:
 #  - 'amnestyfrance'
 
 # POC
-#  - 'EJosephSnowden'
+  - 'EJosephSnowden'
 
 # Wonderful and influential Canadian supporters
-#  - 'MaryZilba'
-#  - 'Dankanter'
+  - 'MaryZilba'
+  - 'Dankanter'
 
 # Influential users tweeting about Amnesty International from Canadian cities (100+ RTs also from within Canadian cities)
 #  - 'GurbetName'
