@@ -7,7 +7,7 @@ require_relative 'lib/engaging_networksAPIengine'
 
 log_time("Start time")
 
-savedata(pullrawdata(1), 'raweactivism')
+savedata(pullrawdata(14), 'raweactivism')
 
 eactivist = organise(loadrawdata)
 
@@ -15,4 +15,4 @@ savedata(eactivist, 'cleaneactivism')
 
 importeactivists(eactivist)
 
-log_time("Finish time")
+log_time("Finish time\n\n\n")

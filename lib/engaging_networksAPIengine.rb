@@ -8,7 +8,7 @@ require 'iconv'
 require 'active_support/all'
 require 'time'
 
-$LOG = Logger.new('log/e-activist.log')
+$LOG = Logger.new('log/engaging_networks.log')
 # Set back to default formatter because active_support/all is messing things up
 $LOG.formatter = Logger::Formatter.new 
 
@@ -52,8 +52,21 @@ def pullrawdata(days)
   http.read_timeout = 480 * 60 # the pulling process needs a huge timeout
   http.use_ssl = true
   http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-  response = http.get(uri.request_uri)
-  raweactivism = XmlSimple.xml_in(response.body.force_encoding("ISO-8859-1").encode("UTF-8"), { 'KeyAttr' => 'name' })['rows'][0]['row']
+  puts "5"
+
+  begin
+    response = http.get(uri.request_uri)
+  rescue Exception => e
+    log_time("error geting http response! #{e.message}\n\n\n", 'error')
+    exit
+  end
+
+  begin
+    raweactivism = XmlSimple.xml_in(response.body.force_encoding("ISO-8859-1").encode("UTF-8"), { 'KeyAttr' => 'name' })['rows'][0]['row']
+  rescue Exception => e
+    log_time("error loading rows! #{e.message}. Probably caused by bad formed XML\n\n\n", 'error')
+    exit
+  end
 
   log_time(raweactivism.length.to_s + " records imported...")
   raweactivism
