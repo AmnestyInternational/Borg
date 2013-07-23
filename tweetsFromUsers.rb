@@ -16,7 +16,7 @@ def pull_tweets
     max_id = nil
     count += 1
     user_details = lookup_twitter_user(screen_name)
-    since_id = fetch_user_since_id(screen_name)
+    since_id = fetch_user_since_id(user_details)
     log_time("#{screen_name} is #{count} of #{totalusers}")
     log_time("#{screen_name} has #{user_details['statuses_count']} tweets, collecting...")
 
@@ -27,7 +27,7 @@ def pull_tweets
       tweetdata = fetch_user_timeline(screen_name, since_id, max_id)
       max_id = tweetdata['max_id']
 
-      tweetscount += tweetdata['tweets'].length if tweetdata['tweets'].length > 0
+      tweetscount += tweetdata['tweets'].length.to_i
 
       insert_tweets(tweetdata['tweets']) if tweetdata['tweets'].length > 0
       sleep 1

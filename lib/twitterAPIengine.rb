@@ -514,52 +514,33 @@ def organise_raw_tweet_data(raw_tweet_data, region_name = nil)
 end
 
 def lookup_twitter_user(screen_name)
-  log_time("Looking up #{screen_name} in TwitterUsers Table")
-  result = @client.execute("
-    SELECT id
-    FROM TwitterUsers
-    WHERE screen_name = '#{screen_name.to_esc_sql}'")
+  log_time("Querring Twitter.user for #{screen_name} details")
+  user = Array.new
+  rawuserdata = Twitter.user(screen_name)
 
-  toprow = result.first
-  if toprow.nil?
-    log_time("#{screen_name} not in TwitterUsers Table, querring Twitter.user")
-    user = Array.new
-    rawuserdata = Twitter.user(screen_name)
+  utc_offset = rawuserdata.utc_offset.nil? ? nil : (rawuserdata.utc_offset / (60 * 60) ).to_s
+  created_at = rawuserdata.created_at.nil? ? nil : Time.parse(rawuserdata.created_at.to_s).to_s
 
-    utc_offset = rawuserdata.utc_offset.nil? ? nil : (rawuserdata.utc_offset / (60 * 60) ).to_s
-    created_at = rawuserdata.created_at.nil? ? nil : Time.parse(rawuserdata.created_at.to_s).to_s
+  user << {
+    :id => rawuserdata.id,
+    :screen_name => rawuserdata.screen_name.to_s,
+    :name => rawuserdata.name.to_s,
+    :location => rawuserdata.location.to_s,
+    :protected => rawuserdata.protected.to_s,
+    :verified => rawuserdata.verified.to_s,
+    :followers_count => rawuserdata.followers_count.to_s,
+    :friends_count => rawuserdata.friends_count.to_s,
+    :statuses_count => rawuserdata.statuses_count.to_s,
+    :time_zone => rawuserdata.time_zone.to_s,
+    :utc_offset => utc_offset,
+    :profile_image_url => rawuserdata.profile_image_url_https.to_s,
+    :created_at => created_at }
 
-    user << {
-      :id => rawuserdata.id,
-      :screen_name => rawuserdata.screen_name.to_s,
-      :name => rawuserdata.name.to_s,
-      :location => rawuserdata.location.to_s,
-      :protected => rawuserdata.protected.to_s,
-      :verified => rawuserdata.verified.to_s,
-      :followers_count => rawuserdata.followers_count.to_s,
-      :friends_count => rawuserdata.friends_count.to_s,
-      :statuses_count => rawuserdata.statuses_count.to_s,
-      :time_zone => rawuserdata.time_zone.to_s,
-      :utc_offset => utc_offset,
-      :profile_image_url => rawuserdata.profile_image_url_https.to_s,
-      :created_at => created_at }
+  insert_twitter_users(user) if user.length > 0
 
-    insert_twitter_users(user) if user.length > 0
-    usr_id = rawuserdata.id.to_s
-  else
-    log_time("#{screen_name} exists in TwitterUsers table")
-    usr_id = toprow['id'].to_s
-  end
+  log_time("#{user[0].inspect}")
 
-  userdata = Hash.new
-  result = @client.execute("
-    SELECT *
-    FROM TwitterUsers
-    WHERE id = '#{usr_id}'")
-
-  userdata = result.first
-
-  return userdata
+  return user[0]
 end
 
 def save_data(inputdata, filename)
@@ -601,11 +582,10 @@ def fetch_follower_ids(usr_id, cursor = -1, count = 5000)
 end
 
 def fetch_user_timeline(user, since_id = nil, max_id = nil)
-
   parameters = Hash.new
   parameters[:count] = 200
   parameters[:max_id] = max_id unless max_id.nil?
-  parameters[:since_id] = since_id unless  since_id.nil?
+  parameters[:since_id] = since_id unless since_id.nil?
 
   log_time("Polling Twitter API for tweets by #{user} using parameters: #{parameters.to_s}")
 
@@ -614,18 +594,14 @@ def fetch_user_timeline(user, since_id = nil, max_id = nil)
   return tweetdata
 end
 
-def fetch_user_since_id(screen_name)
-  log_time("Looking up the max since_id for #{screen_name} from TwitterUsers Table")
+def fetch_user_since_id(user_details)
+  log_time("Looking up the max since_id for #{user_details['screen_name']} from TwitterUsers Table")
   result = @client.execute("
-    SELECT MAX(T.id) 'since_id'
-    FROM
-      Tweets AS T
-      INNER JOIN
-      TwitterUsers AS TU
-      ON T.usr_id = TU.id
+    SELECT MAX(id) 'since_id'
+    FROM Tweets
     WHERE
-      TU.screen_name = '#{screen_name.to_esc_sql}' AND
-      T.id NOT IN (SELECT tweet_id FROM TweetRegions)")
+      usr_id = '#{user_details[:id].to_s}' AND
+      id NOT IN (SELECT tweet_id FROM TweetRegions)")
 
   toprow = result.first
   since_id = toprow.empty? ? nil : toprow['since_id'].to_i
