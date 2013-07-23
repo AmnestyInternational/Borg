@@ -8,6 +8,7 @@ require 'iconv'
 require 'logger'
 require 'twitter'
 require 'active_support/all'
+require 'oauth'
 
 def log_time(input, type = 'info')
   puts Time.now.to_s + ", " + input
@@ -69,15 +70,26 @@ def setvars
   end
   log_time("connected to #{dbyml['database']} on #{dbyml['host']}")
 
-  tokens = loadyaml('config/api_tokens.yml')['twitter']
-  log_time("error loading twitter api token!", 'error') if tokens == nil
+  @tokens = loadyaml('config/api_tokens.yml')['twitter']
+  log_time("error loading twitter api token!", 'error') if @tokens == nil
 
   Twitter.configure do |config|
-    config.consumer_key = tokens['consumer_key']
-    config.consumer_secret = tokens['consumer_secret']
-    config.oauth_token = tokens['oauth_token']
-    config.oauth_token_secret = tokens['oauth_token_secret']
+    config.consumer_key = @tokens['consumer_key']
+    config.consumer_secret = @tokens['consumer_secret']
+    config.oauth_token = @tokens['oauth_token']
+    config.oauth_token_secret = @tokens['oauth_token_secret']
   end
+
+  log_time("Preparing oauth token")
+  consumer = OAuth::Consumer.new(@tokens['consumer_key'], @tokens['consumer_secret'],
+    { :site => "http://api.twitter.com",
+      :scheme => :header
+    })
+
+  token_hash = { :oauth_token => @tokens['oauth_token'],
+                 :oauth_token_secret => @tokens['oauth_token_secret']
+               }
+  @access_token = OAuth::AccessToken.from_hash(consumer, token_hash )
 end
 
 class Hash
@@ -183,15 +195,13 @@ def insert_twitter_user_followers(user_followers)
 
   user_followers_batches = user_followers.each_slice(@sql_insert_batch_size).to_a
 
-  log_time ("user_followers array split into #{user_followers_batches.length} parts...")
+  log_time ("user_followers array split into #{user_followers_batches.length} part(s)...")
 
   count = 0
 
   user_followers_batches.each do | user_followers_batch |
 
     count += user_followers_batch.length
-
-    log_time ("inserting / updating #{user_followers_batch.length} user_follower(s) relationships, #{((count.to_f/user_followers.length.to_f)*100).round(2)}% complete...")
 
     sql = String.new
 
@@ -207,6 +217,8 @@ def insert_twitter_user_followers(user_followers)
     end
 
     @client.execute(sql).do
+
+    log_time ("inserted / updated #{user_followers_batch.length} user_follower(s) relationships, #{((count.to_f/user_followers.length.to_f)*100).round(2)}% complete...")
 
     sleep 0.5
 
@@ -562,26 +574,28 @@ def load_data(filename)
   return file
 end
 
-def fetch_follower_ids(usr_id, cursor = -1)
-  log_time("fetching follower_ids of usr_id #{usr_id.to_i} with cursor #{cursor.to_i}")
+def fetch_follower_ids(usr_id, cursor = -1, count = 5000)
+  log_time("fetching follower_ids of usr_id #{usr_id.to_i} with cursor #{cursor.to_i} using https://api.twitter.com/1.1/followers/ids.json?cursor=#{cursor}&user_id=#{usr_id}&count=#{count}")
 
-  rawfollowersdata = Twitter.follower_ids(usr_id.to_i, { :cursor => cursor.to_i })
+  rawfollowersdata = JSON.parse(@access_token.request(:get, "https://api.twitter.com/1.1/followers/ids.json?cursor=#{cursor}&user_id=#{usr_id}&count=#{count}").body)
+
+  log_time("#{rawfollowersdata['ids'].length} ids fetched")
 
   tweetdata = Hash.new{|hash, key| hash[key] = Array.new}
 
-  if rawfollowersdata
-    rawfollowersdata.each do | rawfollowerid |
+  if rawfollowersdata['ids']
+    rawfollowersdata['ids'].each do | followerid |
 
       # Tweetfollowerids
       tweetdata['tweetfollowerids'] << {
         :usr_id => usr_id,
-        :followers_usr_id => rawfollowerid }
-
+        :followers_usr_id => followerid }
     end
   end
 
-  tweetdata['next_cursor'] = rawfollowersdata.next_cursor
-  tweetdata['previous_cursor'] = rawfollowersdata.previous_cursor
+  tweetdata['nextrun'] = Time.now + 60
+  tweetdata['next_cursor'] = rawfollowersdata['next_cursor']
+  tweetdata['previous_cursor'] = rawfollowersdata['previous_cursor']
 
   return tweetdata
 end
