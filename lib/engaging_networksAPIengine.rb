@@ -45,16 +45,14 @@ def pullrawdata(days)
   token = YAML::load(File.open('config/api_tokens.yml'))['engagingnetworkstoken']
   startdate = (Time.now - (days * 24 * 60 * 60)).strftime("%m%d%Y")
 
-  log_time("Requesting #{days.to_s} day(s) of records with : https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml")
-
   uri = URI.parse("https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml")
   http = Net::HTTP.new(uri.host, uri.port)
   http.read_timeout = 480 * 60 # the pulling process needs a huge timeout
   http.use_ssl = true
   http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-  puts "5"
 
   begin
+    log_time("Requesting #{days.to_s} day(s) of records with : https://www.e-activist.com/ea-dataservice/export.service?token=#{token}&startDate=#{startdate}&type=xml")
     response = http.get(uri.request_uri)
   rescue Exception => e
     log_time("error geting http response! #{e.message}\n\n\n", 'error')
@@ -62,6 +60,7 @@ def pullrawdata(days)
   end
 
   begin
+    log_time("Converting raw data into structured XML")
     raweactivism = XmlSimple.xml_in(response.body.force_encoding("ISO-8859-1").encode("UTF-8"), { 'KeyAttr' => 'name' })['rows'][0]['row']
   rescue Exception => e
     log_time("error loading rows! #{e.message}. Probably caused by bad formed XML\n\n\n", 'error')
@@ -69,7 +68,7 @@ def pullrawdata(days)
   end
 
   log_time(raweactivism.length.to_s + " records imported...")
-  raweactivism
+  return raweactivism
 end
 
 def savedata(inputdata, filename)
@@ -81,7 +80,7 @@ end
 def loadrawdata
   raweactivism = YAML::load(File.open('tmp/raweactivism.yml'))
   log_time("#{raweactivism.length.to_s} records loaded from tmp/raweactivism.yml")
-  raweactivism
+  return raweactivism
 end
 
 def organise(raweactivism)
@@ -116,7 +115,7 @@ def organise(raweactivism)
 
   end
   log_time("organised #{raweactivism.length.to_s} rows into #{eactivist.length.to_s} supporter records")
-  eactivist
+  return eactivist
 end
 
 def importeactivists(eactivists)
