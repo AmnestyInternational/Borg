@@ -609,8 +609,9 @@ def fetch_user_timeline(user, since_id = nil, max_id = nil)
 
   log_time("Polling Twitter API for tweets by #{user} using parameters: #{parameters.to_s}")
 
-  organise_raw_tweet_data(Twitter.user_timeline(user, parameters))
-
+  tweetdata = organise_raw_tweet_data(Twitter.user_timeline(user, parameters))
+  tweetdata['nextrun'] = Time.now + 60
+  return tweetdata
 end
 
 def fetch_user_since_id(screen_name)

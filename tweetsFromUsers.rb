@@ -43,9 +43,9 @@ def pull_tweets
       sleep 1
       insert_tweet_user_mentions(tweetdata['tweetusermentions']) if tweetdata['tweetusermentions'].length > 0
 
+      log_time("#{tweetscount} collected, waiting #{(tweetdata['nextrun'] - Time.now).to_i} seconds before next fetch")
+      sleep(1) until Time.now > tweetdata['nextrun']
       break if tweetdata["tweets"].empty?
-      log_time("#{tweetscount} collected, sleeping for 60 seconds...")
-      sleep 60
     end
     log_time("#{tweetscount} collected for #{screen_name}\n")
   end
