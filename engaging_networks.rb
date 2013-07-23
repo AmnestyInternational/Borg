@@ -15,4 +15,4 @@ savedata(eactivist, 'cleaneactivism')
 
 importeactivists(eactivist)
 
-log_time("Finish time")
+log_time("Finish time\n\n\n")
