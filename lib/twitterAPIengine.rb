@@ -604,7 +604,8 @@ def fetch_user_since_id(user_details)
       id NOT IN (SELECT tweet_id FROM TweetRegions)")
 
   toprow = result.first
-  since_id = toprow.empty? ? nil : toprow['since_id'].to_i
+
+  since_id = toprow['since_id'].nil? ? nil : toprow['since_id'].to_i
   log_time("Max since_id #{since_id}")
   return since_id
 end
