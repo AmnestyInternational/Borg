@@ -11,8 +11,12 @@ require 'active_support/all'
 require 'oauth'
 
 def log_time(input, type = 'info')
-  puts Time.now.to_s + ", " + input
-  type == 'error' ? $LOG.error(input) : $LOG.info(input)
+  puts Time.now.to_s + " " + type + ": " + input
+  $LOG.error(input) if type == 'error'
+  $LOG.info(input) if type == 'info'
+  $LOG.warn(input) if type == 'warn'
+  $LOG.debug(input) if type == 'debug'
+  $LOG.fatal(input) if type == 'fatal'
 end
 
 def loadyaml(yaml)
@@ -288,7 +292,7 @@ def insert_twitter_users(users)
           profile_image_url = #{profile_image_url},
           created_at = CONVERT(DATETIME, LEFT(#{created_at}, 19)),
           updated_at = GETDATE()
-        WHERE id = '10777082';
+        WHERE id = #{id};
       ELSE
         INSERT TwitterUsers (id, screen_name, name, location, protected, verified, followers_count, friends_count, statuses_count, time_zone, utc_offset, profile_image_url, created_at)
         VALUES (
@@ -304,8 +308,7 @@ def insert_twitter_users(users)
           #{time_zone},
           #{utc_offset},
           #{profile_image_url},
-          CONVERT(DATETIME, LEFT(#{created_at}, 19)) );
-    \n"
+          CONVERT(DATETIME, LEFT(#{created_at}, 19)) );\n"
   end
 
   @client.execute(sql).do
@@ -536,6 +539,7 @@ def lookup_twitter_user(screen_name)
     log_time("#{screen_name} has user id #{user_id}, Querring Twitter.user for #{user_id} details")
     begin
       rawuserdata = Twitter.user(user_id)
+      log_time("#{screen_name} is now known as #{rawuserdata.screen_name.to_s}", 'warn')
     rescue Exception => e
       log_time("error looking up #{screen_name} with user id #{user_id} - #{e.message}", 'error')
       return nil
