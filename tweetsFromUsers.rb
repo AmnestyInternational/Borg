@@ -16,9 +16,10 @@ def pull_tweets
     max_id = nil
     count += 1
     user_details = lookup_twitter_user(screen_name)
+    (log_time("User does not exist", "error") && next) if user_details.nil?
     since_id = fetch_user_since_id(user_details)
     log_time("#{screen_name} is #{count} of #{totalusers}")
-    log_time("#{screen_name} has #{user_details['statuses_count']} tweets, collecting...")
+    log_time("#{screen_name} has #{user_details[:statuses_count].to_s} tweets, collecting...")
 
     tweetscount = 0
 

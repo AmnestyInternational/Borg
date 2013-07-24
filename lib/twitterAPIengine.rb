@@ -514,9 +514,33 @@ def organise_raw_tweet_data(raw_tweet_data, region_name = nil)
 end
 
 def lookup_twitter_user(screen_name)
-  log_time("Querring Twitter.user for #{screen_name} details")
   user = Array.new
-  rawuserdata = Twitter.user(screen_name)
+  log_time("Querring Twitter.user for #{screen_name} details")
+
+  begin
+    rawuserdata = Twitter.user(screen_name)
+  rescue Exception => e
+    log_time("error looking up #{screen_name} - #{e.message}", 'error')
+    log_time("looking up user id of #{screen_name} from TwitterUsers table")
+    result = @client.execute("
+      SELECT id
+      FROM TwitterUsers
+      WHERE screen_name = '#{screen_name}'")
+
+    toprow = result.first
+
+    return nil if toprow.nil?
+
+    user_id = toprow['id'].to_i
+
+    log_time("#{screen_name} has user id #{user_id}, Querring Twitter.user for #{user_id} details")
+    begin
+      rawuserdata = Twitter.user(user_id)
+    rescue Exception => e
+      log_time("error looking up #{screen_name} with user id #{user_id} - #{e.message}", 'error')
+      return nil
+    end
+  end
 
   utc_offset = rawuserdata.utc_offset.nil? ? nil : (rawuserdata.utc_offset / (60 * 60) ).to_s
   created_at = rawuserdata.created_at.nil? ? nil : Time.parse(rawuserdata.created_at.to_s).to_s
@@ -595,7 +619,7 @@ def fetch_user_timeline(user, since_id = nil, max_id = nil)
 end
 
 def fetch_user_since_id(user_details)
-  log_time("Looking up the max since_id for #{user_details['screen_name']} from TwitterUsers Table")
+  log_time("Looking up the max since_id for #{user_details[:screen_name]} from TwitterUsers Table")
   result = @client.execute("
     SELECT MAX(id) 'since_id'
     FROM Tweets
