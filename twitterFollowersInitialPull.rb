@@ -19,19 +19,19 @@ log_time("Start time")
 #user = 'RT_Erdogan' # 3189000
 #user = 'cbabdullahgul' # 3522000
 
-users = ['RT_Erdogan','cbabdullahgul']
+users = ['RHOVN','MaryZilba']
 
 setvars
 
 users.each do | user |
   userdetails = lookup_twitter_user(user)
-  log_time("#{user} has #{userdetails['followers_count']} followers")
+  log_time("#{user} has #{userdetails[:followers_count]} followers")
 
   cursor = -1
   followerscount = 0
 
   loop do
-    followersdata = fetch_follower_ids(userdetails['id'], cursor)
+    followersdata = fetch_follower_ids(userdetails[:id], cursor)
 
     insert_twitter_user_followers(followersdata['tweetfollowerids']) if followersdata['tweetfollowerids'].length > 0
 
